@@ -36,6 +36,10 @@ def check_password():
 if check_password():
     if "pagina" not in st.session_state:
         st.session_state["pagina"] = "menu"
+    
+    # Inizializziamo il numero di figli se non esiste
+    if "num_figli" not in st.session_state:
+        st.session_state["num_figli"] = 1
 
     # --- MENU PRINCIPALE ---
     if st.session_state["pagina"] == "menu":
@@ -55,6 +59,7 @@ if check_password():
     # --- REGISTRAZIONE ---
     elif st.session_state["pagina"] == "registro":
         if st.button("⬅️ Torna al Menu"):
+            st.session_state["num_figli"] = 1 # Reset quando si torna al menu
             st.session_state["pagina"] = "menu"
             st.rerun()
         st.title("Nuova Registrazione")
@@ -64,23 +69,39 @@ if check_password():
             lista_mesi = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", 
                           "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"]
 
-            with st.form("modulo_dati"):
-                nome_alunno = st.text_input("Nome Alunno")
+            with st.container():
+                # Gestione dinamica dei nomi alunni
+                nomi_alunni = []
+                
+                # Prima riga con Nome Alunno e tasto +
+                col_nome, col_piu = st.columns([0.9, 0.1])
+                with col_nome:
+                    nomi_alunni.append(st.text_input("Nome Alunno 1", key="alunno_1"))
+                with col_piu:
+                    st.write(" ") # Spazio per allineare
+                    st.write(" ")
+                    if st.button("➕", help="Aggiungi un altro figlio"):
+                        if st.session_state["num_figli"] < 7:
+                            st.session_state["num_figli"] += 1
+                            st.rerun()
+                
+                # Se ci sono più figli, appaiono le altre caselle sotto
+                for i in range(2, st.session_state["num_figli"] + 1):
+                    nomi_alunni.append(st.text_input(f"Nome Alunno {i}", key=f"alunno_{i}"))
+
+            with st.form("modulo_dati_fissi"):
                 nome_genitore = st.text_input("Nome Genitore")
                 telefono = st.text_input("Telefono")
                 email = st.text_input("Email")
                 
-                # 1. Scelta modalità sotto l'email
                 tipo_pagamento = st.radio("Seleziona modalità pagamento:", ["Un mese", "Più mesi"], horizontal=True)
                 
-                # 2. Importo e Data
                 col_a, col_b = st.columns(2)
                 with col_a:
                     importo = st.number_input("Importo (€):", min_value=0, value=50)
                 with col_b:
                     data_pagamento = st.date_input("Data pagamento:", datetime.now())
 
-                # 3. Scelta Mesi
                 if tipo_pagamento == "Un mese":
                     mese_selezione = st.selectbox("Seleziona il mese:", lista_mesi)
                 else:
@@ -90,17 +111,22 @@ if check_password():
                     with col_m2:
                         mese_a = st.selectbox("A:", lista_mesi)
                 
-                # 4. Responsabile sotto la richiesta mese
                 responsabile = st.text_input("Responsabile:", value="Sheikh Mahdy Hasan")
                 
-                submit = st.form_submit_button("Salva")
+                submit = st.form_submit_button("Salva Tutti")
                 
                 if submit:
-                    prossimo_numero = len([x for x in sheet.col_values(2) if x]) 
-                    nuova_riga = [prossimo_numero, nome_alunno, nome_genitore, telefono, email, importo, str(data_pagamento), responsabile]
-                    sheet.append_row(nuova_riga, table_prefix='USER_ENTERED')
-                    st.success(f"Dati di {nome_alunno} registrati correttamente!")
+                    prossimo_numero = len([x for x in sheet.col_values(2) if x])
+                    
+                    # Ciclo per salvare ogni figlio nel database
+                    for i, nome in enumerate(nomi_alunni):
+                        if nome: # Salva solo se il campo non è vuoto
+                            nuova_riga = [prossimo_numero + i, nome, nome_genitore, telefono, email, importo, str(data_pagamento), responsabile]
+                            sheet.append_row(nuova_riga, table_prefix='USER_ENTERED')
+                    
+                    st.success(f"Registrazione completata per {st.session_state['num_figli']} alunni!")
                     st.balloons()
+                    st.session_state["num_figli"] = 1 # Reset dopo il salvataggio
                     
         except Exception as e:
             st.error(f"Errore: {e}")
