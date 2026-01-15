@@ -39,7 +39,7 @@ def check_password():
 
 # Interfaccia dopo il Login
 if check_password():
-    st.success("Accesso effettuato, amore mio! ❤️")
+    st.success("Accesso effettuato")
     
     try:
         sheet = get_sheet()
