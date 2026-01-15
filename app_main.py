@@ -64,38 +64,39 @@ if check_password():
             lista_mesi = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", 
                           "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"]
 
-            tipo_pagamento = st.radio("Seleziona modalità pagamento:", ["Un mese", "Più mesi"], horizontal=True)
-
             with st.form("modulo_dati"):
                 nome_alunno = st.text_input("Nome Alunno")
                 nome_genitore = st.text_input("Nome Genitore")
                 telefono = st.text_input("Telefono")
                 email = st.text_input("Email")
                 
-                # Nuovi campi richiesti
+                # 1. Scelta modalità sotto l'email
+                tipo_pagamento = st.radio("Seleziona modalità pagamento:", ["Un mese", "Più mesi"], horizontal=True)
+                
+                # 2. Importo e Data
                 col_a, col_b = st.columns(2)
                 with col_a:
                     importo = st.number_input("Importo (€):", min_value=0, value=50)
                 with col_b:
                     data_pagamento = st.date_input("Data pagamento:", datetime.now())
-                
-                responsabile = st.text_input("Responsabile:", value="Sheikh Mahdy Hasan")
-                
-                # Scelta mesi
+
+                # 3. Scelta Mesi
                 if tipo_pagamento == "Un mese":
-                    st.selectbox("Seleziona il mese:", lista_mesi, key="mese_singolo")
+                    mese_selezione = st.selectbox("Seleziona il mese:", lista_mesi)
                 else:
                     col_m1, col_m2 = st.columns(2)
                     with col_m1:
-                        st.selectbox("Da:", lista_mesi, key="mese_da")
+                        mese_da = st.selectbox("Da:", lista_mesi)
                     with col_m2:
-                        st.selectbox("A:", lista_mesi, key="mese_a")
+                        mese_a = st.selectbox("A:", lista_mesi)
+                
+                # 4. Responsabile sotto la richiesta mese
+                responsabile = st.text_input("Responsabile:", value="Sheikh Mahdy Hasan")
                 
                 submit = st.form_submit_button("Salva")
                 
                 if submit:
                     prossimo_numero = len([x for x in sheet.col_values(2) if x]) 
-                    # Ho aggiunto i nuovi dati alla riga da salvare
                     nuova_riga = [prossimo_numero, nome_alunno, nome_genitore, telefono, email, importo, str(data_pagamento), responsabile]
                     sheet.append_row(nuova_riga, table_prefix='USER_ENTERED')
                     st.success(f"Dati di {nome_alunno} registrati correttamente!")
