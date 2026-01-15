@@ -63,29 +63,29 @@ if check_password():
             st.rerun()
         st.title("Nuova Registrazione")
         
-        try:
-            sheet = get_sheet()
-            lista_mesi = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", 
+try:
+    sheet = get_sheet()
+    lista_mesi = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", 
                           "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"]
 
-# --- Legge dati dal database per completamento automatico ---
-data_sheet = sheet.get_all_values()
-if len(data_sheet) >= 2:
-    headers = data_sheet[1]
-    rows = data_sheet[2:]
-    df_db = pd.DataFrame(rows, columns=headers)
-    # Creiamo dizionario per autocompletamento
-    dati_alunni = {}
-    for _, r in df_db.iterrows():
-        dati_alunni[r["Nome Alunno"].strip()] = {
-            "Nome Genitore": r.get("Nome Genitore", ""),
-            "Telefono": r.get("Telefono", ""),
-            "Email": r.get("Email", "")
-        }
-    lista_alunni = list(dati_alunni.keys())
-else:
-    dati_alunni = {}
-    lista_alunni = []
+    # --- Legge dati dal database per completamento automatico ---
+    data_sheet = sheet.get_all_values()
+    if len(data_sheet) >= 2:
+        headers = data_sheet[1]
+        rows = data_sheet[2:]
+        df_db = pd.DataFrame(rows, columns=headers)
+        # creiamo dizionario per autocompletamento
+        dati_alunni = {}
+        for _, r in df_db.iterrows():
+            dati_alunni[r["Nome Alunno"].strip()] = {
+                "Nome Genitore": r.get("Nome Genitore", ""),
+                "Telefono": r.get("Telefono", ""),
+                "Email": r.get("Email", "")
+            }
+        lista_alunni = list(dati_alunni.keys())
+    else:
+        dati_alunni = {}
+        lista_alunni = []
 
 # --- Nomi Alunni con menu a tendina ---
 nomi_alunni = []
