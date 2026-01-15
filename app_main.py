@@ -97,6 +97,8 @@ if check_password():
                 with col_b:
                     data_pagamento = st.date_input("Data pagamento:", datetime.now())
 
+                # RIPRISTINO SEZIONE MESI (DA - A)
+                mese_da, mese_a, mese_selezione = None, None, None
                 if tipo_pagamento == "Un mese":
                     mese_selezione = st.selectbox("Seleziona il mese:", [""] + lista_mesi)
                 else:
@@ -117,38 +119,39 @@ if check_password():
                     if not email: errori.append("Email")
                     if importo <= 0: errori.append("Importo")
                     
-                    if tipo_pagamento == "Un mese":
-                        if not mese_selezione: errori.append("Mese")
-                    else:
-                        if not mese_da or not mese_a: errori.append("Mesi (Da/A)")
+                    if tipo_pagamento == "Un mese" and not mese_selezione: errori.append("Mese")
+                    if tipo_pagamento == "Più mesi" and (not mese_da or not mese_a): errori.append("Mesi (Da/A)")
 
                     if errori:
                         st.error(f"⚠️ Per favore, compila i seguenti campi mancanti: {', '.join(errori)}")
                     else:
-                        # --- INTELLIGENZA: CONTROLLO ESISTENZA ---
-                        nomi_esistenti = sheet.col_values(2) # Legge i nomi nella colonna B
+                        # CONTROLLO ESISTENZA E SALVATAGGIO CORRETTO
+                        nomi_esistenti = sheet.col_values(2)
                         nomi_esistenti = [n.strip().lower() for n in nomi_esistenti]
                         
-                        prossimo_numero = len([x for x in sheet.col_values(2) if x])
+                        prossimo_id = len([x for x in sheet.col_values(1) if x])
                         registrati = 0
                         
-                        for i, nome in enumerate(nomi_alunni):
-                            if nome:
+                        mese_testo = mese_selezione if tipo_pagamento == "Un mese" else f"{mese_da}-{mese_a}"
+                        
+                        for nome in nomi_alunni:
+                            if nome and nome.strip():
                                 if nome.strip().lower() in nomi_esistenti:
-                                    st.warning(f"⚠️ L'alunno '{nome}' è già presente nel database. Salto questa riga.")
+                                    st.warning(f"⚠️ L'alunno '{nome}' è già nel database. Salto riga.")
                                 else:
-                                    nuova_riga = [prossimo_numero + registrati, nome, nome_genitore, telefono, email, importo, str(data_pagamento), responsabile]
-                                    sheet.append_row(nuova_riga, table_prefix='USER_ENTERED')
+                                    # Rimosso table_prefix che causava l'errore
+                                    nuova_riga = [prossimo_id + registrati, nome, nome_genitore, telefono, email, importo, str(data_pagamento), responsabile, mese_testo]
+                                    sheet.append_row(nuova_riga)
                                     registrati += 1
                         
                         if registrati > 0:
-                            st.success(f"Registrazione completata per {registrati} nuovi alunni! ❤️")
+                            st.success(f"Registrato con successo! ❤️")
                             st.balloons()
                             st.session_state["num_figli"] = 1
                             st.rerun()
                         
         except Exception as e:
-            st.error(f"Errore: {e}")
+            st.error(f"Errore tecnico: {e}")
 
     # --- VISUALIZZAZIONE ---
     elif st.session_state["pagina"] == "visualizza":
