@@ -117,7 +117,7 @@ if check_password():
 
             st.write("---")  # separatore fuori dal for
 
-                        # --- Nomi Alunni / Genitori / Email / Telefono con menu a tendina e autocompletamento ---
+            # --- Nomi Alunni / Genitori / Email / Telefono con menu a tendina e autocompletamento ---
             # Creiamo anche le liste per i menu a tendina
             lista_genitori = []
             lista_email = []
@@ -128,17 +128,15 @@ if check_password():
                 if dati.get("Email"): lista_email.append(dati["Email"])
                 if dati.get("Telefono"): lista_telefono.append(dati["Telefono"])
 
-            # --- Campo principale alunno ---
+            # --- Menu a tendina per Genitore, Telefono, Email (il Nome Alunno principale resta quello con +) ---
             col1, col2 = st.columns(2)
             with col1:
-                selezione_alunno = st.selectbox("Nome Alunno", [""] + lista_alunni, key="alunno_select")
-            with col2:
                 selezione_genitore = st.selectbox("Nome Genitore", [""] + lista_genitori, key="genitore_select")
+            with col2:
+                selezione_telefono = st.selectbox("Telefono", [""] + lista_telefono, key="telefono_select")
 
             col3, col4 = st.columns(2)
             with col3:
-                selezione_telefono = st.selectbox("Telefono", [""] + lista_telefono, key="telefono_select")
-            with col4:
                 selezione_email = st.selectbox("Email", [""] + lista_email, key="email_select")
 
             # --- Autocompletamento bidirezionale ---
@@ -151,21 +149,21 @@ if check_password():
                 elif genitore:
                     for al, d in dati_alunni.items():
                         if d["Nome Genitore"] == genitore:
-                            st.session_state["alunno_select"] = al
+                            st.session_state["alunno_1_select"] = al  # <- punta al campo principale con + 
                             st.session_state["telefono_select"] = d.get("Telefono", "")
                             st.session_state["email_select"] = d.get("Email", "")
                             break
                 elif email:
                     for al, d in dati_alunni.items():
                         if d["Email"] == email:
-                            st.session_state["alunno_select"] = al
+                            st.session_state["alunno_1_select"] = al
                             st.session_state["genitore_select"] = d.get("Nome Genitore", "")
                             st.session_state["telefono_select"] = d.get("Telefono", "")
                             break
                 elif telefono:
                     for al, d in dati_alunni.items():
                         if d["Telefono"] == telefono:
-                            st.session_state["alunno_select"] = al
+                            st.session_state["alunno_1_select"] = al
                             st.session_state["genitore_select"] = d.get("Nome Genitore", "")
                             st.session_state["email_select"] = d.get("Email", "")
                             break
@@ -177,7 +175,8 @@ if check_password():
             elif selezione_telefono: aggiorna_session_state(telefono=selezione_telefono)
 
             # --- Aggiungi al tuo array nomi_alunni per gestione num_figli ---
-            nomi_alunni = [st.session_state["alunno_select"] if st.session_state["alunno_select"] else ""]
+            nomi_alunni = [st.session_state["alunno_1_select"] if st.session_state["alunno_1_select"] else ""]
+
 
             # --- Modalità pagamento (reattiva) ---
             tipo_pagamento = st.radio(
