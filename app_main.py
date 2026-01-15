@@ -68,6 +68,7 @@ if check_password():
             lista_mesi = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", 
                           "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"]
 
+            # Contenitore per i nomi degli alunni (fuori dal form per permettere il "+" dinamico)
             with st.container():
                 nomi_alunni = []
                 col_nome, col_piu = st.columns([0.9, 0.1])
@@ -84,21 +85,18 @@ if check_password():
                 for i in range(2, st.session_state["num_figli"] + 1):
                     nomi_alunni.append(st.text_input(f"Nome Alunno {i}", key=f"alunno_{i}"))
 
-            with st.form("modulo_dati_fissi"):
+            # Form per il resto dei dati
+            with st.form("modulo_dati_completo"):
                 nome_genitore = st.text_input("Nome Genitore")
                 telefono = st.text_input("Telefono")
                 email = st.text_input("Email")
                 
                 tipo_pagamento = st.radio("Seleziona modalità pagamento:", ["Un mese", "Più mesi"], horizontal=True)
                 
-                col_a, col_b = st.columns(2)
-                with col_a:
-                    importo = st.number_input("Importo (€):", min_value=0, value=0)
-                with col_b:
-                    data_pagamento = st.date_input("Data pagamento:", datetime.now())
-
-                # RIPRISTINO SEZIONE MESI (DA - A)
+                # Sezione Mesi Dinamica
                 mese_da, mese_a, mese_selezione = None, None, None
+                
+                # Usiamo un contenitore vuoto per far apparire i campi giusti
                 if tipo_pagamento == "Un mese":
                     mese_selezione = st.selectbox("Seleziona il mese:", [""] + lista_mesi)
                 else:
@@ -108,6 +106,12 @@ if check_password():
                     with col_m2:
                         mese_a = st.selectbox("A:", [""] + lista_mesi)
                 
+                col_a, col_b = st.columns(2)
+                with col_a:
+                    importo = st.number_input("Importo (€):", min_value=0, value=0)
+                with col_b:
+                    data_pagamento = st.date_input("Data pagamento:", datetime.now())
+
                 responsabile = st.text_input("Responsabile:", value="Sheikh Mahdy Hasan")
                 
                 submit = st.form_submit_button("Salva Tutti")
@@ -125,7 +129,7 @@ if check_password():
                     if errori:
                         st.error(f"⚠️ Per favore, compila i seguenti campi mancanti: {', '.join(errori)}")
                     else:
-                        # CONTROLLO ESISTENZA E SALVATAGGIO CORRETTO
+                        # CONTROLLO ESISTENZA
                         nomi_esistenti = sheet.col_values(2)
                         nomi_esistenti = [n.strip().lower() for n in nomi_esistenti]
                         
@@ -139,13 +143,12 @@ if check_password():
                                 if nome.strip().lower() in nomi_esistenti:
                                     st.warning(f"⚠️ L'alunno '{nome}' è già nel database. Salto riga.")
                                 else:
-                                    # Rimosso table_prefix che causava l'errore
                                     nuova_riga = [prossimo_id + registrati, nome, nome_genitore, telefono, email, importo, str(data_pagamento), responsabile, mese_testo]
                                     sheet.append_row(nuova_riga)
                                     registrati += 1
                         
                         if registrati > 0:
-                            st.success(f"Registrato con successo! ❤️")
+                            st.success(f"Registrato con successo {registrati} alunni! ❤️")
                             st.balloons()
                             st.session_state["num_figli"] = 1
                             st.rerun()
