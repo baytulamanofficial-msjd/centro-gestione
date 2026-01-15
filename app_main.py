@@ -68,33 +68,59 @@ if check_password():
             lista_mesi = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", 
                           "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"]
 
-            # --- Nomi Alunni ---
-            nomi_alunni = []
-            col_nome, col_piu = st.columns([0.9, 0.1])
-            with col_nome:
-                nomi_alunni.append(st.text_input("Nome Alunno 1", key="alunno_1"))
-            with col_piu:
-                st.write(" ")
-                st.write(" ")
-                if st.button("➕"):
-                    if st.session_state["num_figli"] < 7:
-                        st.session_state["num_figli"] += 1
-                        st.rerun()
-            
-            for i in range(2, st.session_state["num_figli"] + 1):
-                nomi_alunni.append(st.text_input(f"Nome Alunno {i}", key=f"alunno_{i}"))
+# --- Legge dati dal database per completamento automatico ---
+data_sheet = sheet.get_all_values()
+if len(data_sheet) >= 2:
+    headers = data_sheet[1]
+    rows = data_sheet[2:]
+    df_db = pd.DataFrame(rows, columns=headers)
+    # Creiamo dizionario per autocompletamento
+    dati_alunni = {}
+    for _, r in df_db.iterrows():
+        dati_alunni[r["Nome Alunno"].strip()] = {
+            "Nome Genitore": r.get("Nome Genitore", ""),
+            "Telefono": r.get("Telefono", ""),
+            "Email": r.get("Email", "")
+        }
+    lista_alunni = list(dati_alunni.keys())
+else:
+    dati_alunni = {}
+    lista_alunni = []
 
+# --- Nomi Alunni con menu a tendina ---
+nomi_alunni = []
+col_nome, col_piu = st.columns([0.9, 0.1])
+with col_nome:
+    selezione_alunno = st.selectbox("Nome Alunno 1", [""] + lista_alunni, key="alunno_1_select")
+    if selezione_alunno:
+        nomi_alunni.append(selezione_alunno)
+        # autocompleta gli altri campi
+        dati_selezionati = dati_alunni.get(selezione_alunno, {})
+        st.session_state["nome_genitore_auto"] = dati_selezionati.get("Nome Genitore", "")
+        st.session_state["telefono_auto"] = dati_selezionati.get("Telefono", "")
+        st.session_state["email_auto"] = dati_selezionati.get("Email", "")
+    else:
+        nomi_alunni.append("")
+
+with col_piu:
+    st.write(" ")
+    st.write(" ")
+    if st.button("➕"):
+        if st.session_state["num_figli"] < 7:
+            st.session_state["num_figli"] += 1
+            st.rerun()
+
+for i in range(2, st.session_state["num_figli"] + 1):
+    nomi_alunni.append(st.text_input(f"Nome Alunno {i}", key=f"alunno_{i}"))
             st.write("---")
 
             # --- Nome Genitore ---
-            nome_genitore = st.text_input("Nome Genitore")
-
-            # --- Telefono / Mail ---
-            col_tel, col_mail = st.columns(2)
-            with col_tel:
-                telefono = st.text_input("Telefono")
-            with col_mail:
-                email = st.text_input("Email")
+nome_genitore = st.text_input("Nome Genitore", value=st.session_state.get("nome_genitore_auto", ""))
+col_tel, col_mail = st.columns(2)
+with col_tel:
+    telefono = st.text_input("Telefono", value=st.session_state.get("telefono_auto", ""))
+with col_mail:
+    email = st.text_input("Email", value=st.session_state.get("email_auto", ""))
 
             # --- Modalità pagamento (reattiva) ---
             tipo_pagamento = st.radio(
