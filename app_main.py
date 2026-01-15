@@ -69,7 +69,7 @@ if check_password():
             lista_mesi = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", 
                           "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"]
 
-            # 1. Nomi Alunni
+            # --- Nomi Alunni ---
             nomi_alunni = []
             col_nome, col_piu = st.columns([0.9, 0.1])
             with col_nome:
@@ -87,37 +87,37 @@ if check_password():
 
             st.write("---")
 
+            # --- Nome Genitore ---
+            nome_genitore = st.text_input("Nome Genitore")
+
+            # --- Telefono / Mail ---
+            col_tel, col_mail = st.columns(2)
+            with col_tel:
+                telefono = st.text_input("Telefono")
+            with col_mail:
+                email = st.text_input("Email")
+
+            # --- Modalità pagamento (reattiva) ---
+            tipo_pagamento = st.radio(
+                "Seleziona modalità pagamento:",
+                ["Un mese", "Più mesi"],
+                horizontal=True
+            )
+
+            # --- Mese / Più mesi ---
+            mese_da, mese_a, mese_singolo = "", "", ""
+            if tipo_pagamento == "Un mese":
+                mese_singolo = st.selectbox("Seleziona il mese:", [""] + lista_mesi)
+            else:
+                st.write("Seleziona l'intervallo di mesi:")
+                col_m1, col_m2 = st.columns(2)
+                with col_m1:
+                    mese_da = st.selectbox("Da mese:", [""] + lista_mesi)
+                with col_m2:
+                    mese_a = st.selectbox("Al mese:", [""] + lista_mesi)
+
+            # --- FORM SOLO PER SALVATAGGIO ---
             with st.form("modulo_dati_fissi"):
-                # Nome Genitore
-                nome_genitore = st.text_input("Nome Genitore")
-
-                # Telefono / Mail
-                col_tel, col_mail = st.columns(2)
-                with col_tel:
-                    telefono = st.text_input("Telefono")
-                with col_mail:
-                    email = st.text_input("Email")
-
-                # Modalità pagamento
-                tipo_pagamento = st.radio(
-                    "Seleziona modalità pagamento:",
-                    ["Un mese", "Più mesi"],
-                    horizontal=True
-                )
-
-                # Mese / Più mesi
-                mese_da, mese_a, mese_singolo = "", "", ""
-                if tipo_pagamento == "Un mese":
-                    mese_singolo = st.selectbox("Seleziona il mese:", [""] + lista_mesi)
-                else:
-                    st.write("Seleziona l'intervallo di mesi:")
-                    col_m1, col_m2 = st.columns(2)
-                    with col_m1:
-                        mese_da = st.selectbox("Da mese:", [""] + lista_mesi)
-                    with col_m2:
-                        mese_a = st.selectbox("Al mese:", [""] + lista_mesi)
-
-                # Importo / Data
                 col_imp, col_data = st.columns(2)
                 with col_imp:
                     importo = st.number_input("Importo (€):", min_value=0, value=0)
@@ -125,9 +125,8 @@ if check_password():
                     data_pagamento = st.date_input("Data pagamento:", datetime.now())
 
                 responsabile = st.text_input("Responsabile:", value="Sheikh Mahdy Hasan")
-                
                 submit = st.form_submit_button("Salva Tutti")
-                
+
                 if submit:
                     errori = []
                     if not nomi_alunni[0]: errori.append("Nome Alunno")
@@ -157,7 +156,7 @@ if check_password():
                                     registrati += 1
                         
                         if registrati > 0:
-                            st.success(f"Salvato con successo!")
+                            st.success("Salvato con successo!")
                             st.balloons()
                             st.session_state["num_figli"] = 1
                             st.rerun()
