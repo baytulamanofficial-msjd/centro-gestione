@@ -2,6 +2,7 @@ import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
 import pandas as pd
+from datetime import datetime
 
 # Configurazione Pagina
 st.set_page_config(page_title="Baytul Aman Monza", page_icon="📖", layout="wide")
@@ -63,7 +64,6 @@ if check_password():
             lista_mesi = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", 
                           "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"]
 
-            # Per far apparire le caselle subito, mettiamo la scelta della modalità fuori o usiamo una colonna
             tipo_pagamento = st.radio("Seleziona modalità pagamento:", ["Un mese", "Più mesi"], horizontal=True)
 
             with st.form("modulo_dati"):
@@ -72,7 +72,16 @@ if check_password():
                 telefono = st.text_input("Telefono")
                 email = st.text_input("Email")
                 
-                # Qui mostriamo le caselle in base alla scelta fatta sopra
+                # Nuovi campi richiesti
+                col_a, col_b = st.columns(2)
+                with col_a:
+                    importo = st.number_input("Importo (€):", min_value=0, value=50)
+                with col_b:
+                    data_pagamento = st.date_input("Data pagamento:", datetime.now())
+                
+                responsabile = st.text_input("Responsabile:", value="Sheikh Mahdy Hasan")
+                
+                # Scelta mesi
                 if tipo_pagamento == "Un mese":
                     st.selectbox("Seleziona il mese:", lista_mesi, key="mese_singolo")
                 else:
@@ -86,7 +95,8 @@ if check_password():
                 
                 if submit:
                     prossimo_numero = len([x for x in sheet.col_values(2) if x]) 
-                    nuova_riga = [prossimo_numero, nome_alunno, nome_genitore, telefono, email]
+                    # Ho aggiunto i nuovi dati alla riga da salvare
+                    nuova_riga = [prossimo_numero, nome_alunno, nome_genitore, telefono, email, importo, str(data_pagamento), responsabile]
                     sheet.append_row(nuova_riga, table_prefix='USER_ENTERED')
                     st.success(f"Dati di {nome_alunno} registrati correttamente!")
                     st.balloons()
