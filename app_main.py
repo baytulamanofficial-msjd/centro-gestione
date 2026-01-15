@@ -165,7 +165,7 @@ if check_password():
             st.error(f"Errore: {e}")
 
     # --- VISUALIZZAZIONE ---
-    elif st.session_state["pagina"] == "visualizza":
+elif st.session_state["pagina"] == "visualizza":
     if st.button("⬅️ Torna al Menu"):
         st.session_state["pagina"] = "menu"
         st.rerun()
