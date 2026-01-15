@@ -171,9 +171,15 @@ if check_password():
             st.rerun()
         st.title("Database")
         try:
-            sheet = get_sheet()
             data = sheet.get_all_values()
-            df = pd.DataFrame(data[1:], columns=data[0]) 
-            st.dataframe(df, use_container_width=True)
+
+# Prima riga vuota, intestazioni nella seconda
+if len(data) < 2:
+    st.warning("Database vuoto o senza intestazioni.")
+else:
+    headers = data[1]      # seconda riga = intestazioni
+    rows = data[2:]        # dati dalla terza in poi
+    df = pd.DataFrame(rows, columns=headers)
+    st.dataframe(df, use_container_width=True)
         except:
             st.error("Errore database")
