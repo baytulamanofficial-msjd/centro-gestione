@@ -57,160 +57,141 @@ if check_password():
 
     # --- REGISTRAZIONE ---
     elif st.session_state.get("pagina") == "registro":
-    if st.button("⬅️ Torna al Menu"):
-        st.session_state["num_figli"] = 1
-        st.session_state["pagina"] = "menu"
-        st.rerun()
-    st.title("Nuova Registrazione")
+        if st.button("⬅️ Torna al Menu"):
+            st.session_state["num_figli"] = 1
+            st.session_state["pagina"] = "menu"
+            st.rerun()
 
-    try:
-        sheet = get_sheet()
-        lista_mesi = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
-                      "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"]
+        st.title("Nuova Registrazione")
 
-        # --- Legge dati dal database per completamento automatico ---
-        data_sheet = sheet.get_all_values()
-        dati_list = []
+        try:
+            sheet = get_sheet()
+            lista_mesi = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
+                          "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"]
 
-        if len(data_sheet) >= 2:
-            headers = data_sheet[1]
-            rows = data_sheet[2:]
-            df_db = pd.DataFrame(rows, columns=headers)
-            for _, r in df_db.iterrows():
-                dati_list.append({
-                    "Nome Alunno": r.get("Nome Alunno", "").strip(),
-                    "Nome Genitore": r.get("Nome Genitore", "").strip(),
-                    "Telefono": r.get("Telefono", "").strip(),
-                    "Email": r.get("Email", "").strip()
-                })
+            # --- Legge dati dal database per completamento automatico ---
+            data_sheet = sheet.get_all_values()
+            dati_alunni = {}
+            lista_alunni = []
 
-        # --- Liste per menu a tendina ---
-        lista_alunni = [""] + [r["Nome Alunno"] for r in dati_list]
-        lista_genitori = [""] + [r["Nome Genitore"] for r in dati_list]
-        lista_telefono = [""] + [r["Telefono"] for r in dati_list]
-        lista_email = [""] + [r["Email"] for r in dati_list]
+            if len(data_sheet) >= 2:
+                headers = data_sheet[1]
+                rows = data_sheet[2:]
+                df_db = pd.DataFrame(rows, columns=headers)
 
-        # --- Inizializza session_state per autocompletamento ---
-        for key in ["alunno_select", "genitore_select", "telefono_select", "email_select"]:
-            if key not in st.session_state:
-                st.session_state[key] = ""
+                # Creiamo dizionario per autocompletamento
+                for _, r in df_db.iterrows():
+                    dati_alunni[r["Nome Alunno"].strip()] = {
+                        "Nome Genitore": r.get("Nome Genitore", ""),
+                        "Telefono": r.get("Telefono", ""),
+                        "Email": r.get("Email", "")
+                    }
+                lista_alunni = list(dati_alunni.keys())
 
-        # --- Menu a tendina con autocompletamento ---
-        col1, col2 = st.columns(2)
-        with col1:
-            selezione_alunno = st.selectbox("Nome Alunno", lista_alunni, key="alunno_select")
-            selezione_genitore = st.selectbox("Nome Genitore", lista_genitori, key="genitore_select")
-        with col2:
-            selezione_telefono = st.selectbox("Telefono", lista_telefono, key="telefono_select")
-            selezione_email = st.selectbox("Email", lista_email, key="email_select")
-
-        # --- Logica di autocompletamento bidirezionale ---
-        def aggiorna_campi(campo_modificato):
-            record = None
-            if campo_modificato == "alunno" and selezione_alunno:
-                record = next((r for r in dati_list if r["Nome Alunno"] == selezione_alunno), None)
-            elif campo_modificato == "genitore" and selezione_genitore:
-                record = next((r for r in dati_list if r["Nome Genitore"] == selezione_genitore), None)
-            elif campo_modificato == "telefono" and selezione_telefono:
-                record = next((r for r in dati_list if r["Telefono"] == selezione_telefono), None)
-            elif campo_modificato == "email" and selezione_email:
-                record = next((r for r in dati_list if r["Email"] == selezione_email), None)
-
-            if record:
-                st.session_state["alunno_select"] = record["Nome Alunno"]
-                st.session_state["genitore_select"] = record["Nome Genitore"]
-                st.session_state["telefono_select"] = record["Telefono"]
-                st.session_state["email_select"] = record["Email"]
-
-        # Applica autocompletamento per tutti i campi
-        aggiorna_campi("alunno")
-        aggiorna_campi("genitore")
-        aggiorna_campi("telefono")
-        aggiorna_campi("email")
-
-        # --- Nomi Alunni aggiuntivi (dal 2 in poi) ---
-        nomi_alunni = [st.session_state["alunno_select"]]
-        if st.button("➕"):
-            if st.session_state["num_figli"] < 7:
-                st.session_state["num_figli"] += 1
-                st.rerun()
-
-        for i in range(2, st.session_state["num_figli"] + 1):
-            nomi_alunni.append(st.text_input(f"Nome Alunno {i}", key=f"alunno_{i}"))
-
-        st.write("---")  # separatore fuori dal for
-
-        # --- Altri campi ---
-        nome_genitore = st.session_state["genitore_select"]
-        telefono = st.session_state["telefono_select"]
-        email = st.session_state["email_select"]
-
-        # --- Modalità pagamento e form originale ---
-        tipo_pagamento = st.radio(
-            "Seleziona modalità pagamento:",
-            ["Un mese", "Più mesi"],
-            horizontal=True
-        )
-
-        mese_da, mese_a, mese_singolo = "", "", ""
-        if tipo_pagamento == "Un mese":
-            mese_singolo = st.selectbox("Seleziona il mese:", [""] + lista_mesi)
-        else:
-            st.write("Seleziona l'intervallo di mesi:")
-            col_m1, col_m2 = st.columns(2)
-            with col_m1:
-                mese_da = st.selectbox("Da mese:", [""] + lista_mesi)
-            with col_m2:
-                mese_a = st.selectbox("Al mese:", [""] + lista_mesi)
-
-        # --- FORM SOLO PER SALVATAGGIO ---
-        with st.form("modulo_dati_fissi"):
-            col_imp, col_data = st.columns(2)
-            with col_imp:
-                importo = st.number_input("Importo (€):", min_value=0, value=0)
-            with col_data:
-                data_pagamento = st.date_input("Data pagamento:", datetime.now())
-
-            responsabile = st.text_input("Responsabile:", value="Sheikh Mahdy Hasan")
-            submit = st.form_submit_button("Salva Tutti")
-
-            if submit:
-                errori = []
-                if not nomi_alunni[0]: errori.append("Nome Alunno")
-                if not nome_genitore: errori.append("Nome Genitore")
-                if not email: errori.append("Email")
-                if importo <= 0: errori.append("Importo")
-                if tipo_pagamento == "Un mese" and not mese_singolo: errori.append("Mese")
-                if tipo_pagamento == "Più mesi" and (not mese_da or not mese_a): errori.append("Mesi (Da/A)")
-
-                if errori:
-                    st.error(f"⚠️ Campi mancanti: {', '.join(errori)}")
+            # --- Nomi Alunni con menu a tendina ---
+            nomi_alunni = []
+            col_nome, col_piu = st.columns([0.9, 0.1])
+            with col_nome:
+                selezione_alunno = st.selectbox("Nome Alunno 1", [""] + lista_alunni, key="alunno_1_select")
+                if selezione_alunno:
+                    nomi_alunni.append(selezione_alunno)
+                    # autocompleta gli altri campi
+                    dati_selezionati = dati_alunni.get(selezione_alunno, {})
+                    st.session_state["nome_genitore_auto"] = dati_selezionati.get("Nome Genitore", "")
+                    st.session_state["telefono_auto"] = dati_selezionati.get("Telefono", "")
+                    st.session_state["email_auto"] = dati_selezionati.get("Email", "")
                 else:
-                    nomi_esistenti = [n.strip().lower() for n in sheet.col_values(2)]
-                    prossimo_id = len([x for x in sheet.col_values(1) if x])
-                    registrati = 0
+                    nomi_alunni.append("")
 
-                    mese_testo = mese_singolo if tipo_pagamento == "Un mese" else f"Da {mese_da} a {mese_a}"
-
-                    for nome in nomi_alunni:
-                        if nome and nome.strip():
-                            if nome.strip().lower() in nomi_esistenti:
-                                st.warning(f"'{nome}' è già registrato.")
-                            else:
-                                riga = [prossimo_id + registrati, nome, nome_genitore, telefono, email, importo, str(data_pagamento), responsabile, mese_testo]
-                                sheet.append_row(riga)
-                                registrati += 1
-
-                    if registrati > 0:
-                        st.success("Salvato con successo!")
-                        st.balloons()
-                        st.session_state["num_figli"] = 1
+            with col_piu:
+                st.write(" ")
+                st.write(" ")
+                if st.button("➕"):
+                    if st.session_state["num_figli"] < 7:
+                        st.session_state["num_figli"] += 1
                         st.rerun()
 
-    except Exception as e:
-        st.error(f"Errore: {e}")
+            # --- Altri alunni (dal 2 in poi) ---
+            for i in range(2, st.session_state["num_figli"] + 1):
+                nomi_alunni.append(st.text_input(f"Nome Alunno {i}", key=f"alunno_{i}"))
 
-        
+            st.write("---")  # separatore fuori dal for
+
+            # --- Nome Genitore / Telefono / Email ---
+            nome_genitore = st.text_input("Nome Genitore", value=st.session_state.get("nome_genitore_auto", ""))
+            col_tel, col_mail = st.columns(2)
+            with col_tel:
+                telefono = st.text_input("Telefono", value=st.session_state.get("telefono_auto", ""))
+            with col_mail:
+                email = st.text_input("Email", value=st.session_state.get("email_auto", ""))
+
+            # --- Modalità pagamento (reattiva) ---
+            tipo_pagamento = st.radio(
+                "Seleziona modalità pagamento:",
+                ["Un mese", "Più mesi"],
+                horizontal=True
+            )
+
+            # --- Mese / Più mesi ---
+            mese_da, mese_a, mese_singolo = "", "", ""
+            if tipo_pagamento == "Un mese":
+                mese_singolo = st.selectbox("Seleziona il mese:", [""] + lista_mesi)
+            else:
+                st.write("Seleziona l'intervallo di mesi:")
+                col_m1, col_m2 = st.columns(2)
+                with col_m1:
+                    mese_da = st.selectbox("Da mese:", [""] + lista_mesi)
+                with col_m2:
+                    mese_a = st.selectbox("Al mese:", [""] + lista_mesi)
+
+            # --- FORM SOLO PER SALVATAGGIO ---
+            with st.form("modulo_dati_fissi"):
+                col_imp, col_data = st.columns(2)
+                with col_imp:
+                    importo = st.number_input("Importo (€):", min_value=0, value=0)
+                with col_data:
+                    data_pagamento = st.date_input("Data pagamento:", datetime.now())
+
+                responsabile = st.text_input("Responsabile:", value="Sheikh Mahdy Hasan")
+                submit = st.form_submit_button("Salva Tutti")
+
+                if submit:
+                    errori = []
+                    if not nomi_alunni[0]: errori.append("Nome Alunno")
+                    if not nome_genitore: errori.append("Nome Genitore")
+                    if not email: errori.append("Email")
+                    if importo <= 0: errori.append("Importo")
+
+                    if tipo_pagamento == "Un mese" and not mese_singolo: errori.append("Mese")
+                    if tipo_pagamento == "Più mesi" and (not mese_da or not mese_a): errori.append("Mesi (Da/A)")
+
+                    if errori:
+                        st.error(f"⚠️ Campi mancanti: {', '.join(errori)}")
+                    else:
+                        nomi_esistenti = [n.strip().lower() for n in sheet.col_values(2)]
+                        prossimo_id = len([x for x in sheet.col_values(1) if x])
+                        registrati = 0
+
+                        mese_testo = mese_singolo if tipo_pagamento == "Un mese" else f"Da {mese_da} a {mese_a}"
+
+                        for nome in nomi_alunni:
+                            if nome and nome.strip():
+                                if nome.strip().lower() in nomi_esistenti:
+                                    st.warning(f"'{nome}' è già registrato.")
+                                else:
+                                    riga = [prossimo_id + registrati, nome, nome_genitore, telefono, email, importo, str(data_pagamento), responsabile, mese_testo]
+                                    sheet.append_row(riga)
+                                    registrati += 1
+
+                        if registrati > 0:
+                            st.success("Salvato con successo!")
+                            st.balloons()
+                            st.session_state["num_figli"] = 1
+                            st.rerun()
+
+        except Exception as e:
+            st.error(f"Errore: {e}")
+
     # --- VISUALIZZAZIONE ---
     elif st.session_state.get("pagina") == "visualizza":
         if st.button("⬅️ Torna al Menu"):
