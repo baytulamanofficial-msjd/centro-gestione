@@ -93,23 +93,37 @@ if check_password():
             col_nome, col_piu = st.columns([0.9, 0.1])
             with col_nome:
                 selezione_alunno = st.selectbox("Nome Alunno 1", [""] + lista_alunni, key="alunno_1_select")
-                if selezione_alunno:
-                    nomi_alunni.append(selezione_alunno)
-                    # autocompleta gli altri campi
-                    dati_selezionati = dati_alunni.get(selezione_alunno, {})
-                    st.session_state["nome_genitore_auto"] = dati_selezionati.get("Nome Genitore", "")
-                    st.session_state["telefono_auto"] = dati_selezionati.get("Telefono", "")
-                    st.session_state["email_auto"] = dati_selezionati.get("Email", "")
-                else:
-                    nomi_alunni.append("")
-
-            with col_piu:
-                st.write(" ")
-                st.write(" ")
-                if st.button("➕"):
-                    if st.session_state["num_figli"] < 7:
-                        st.session_state["num_figli"] += 1
-                        st.rerun()
+                            # --- Autocompletamento bidirezionale corretto ---
+            # Aggiorno le session_state PRIMA di creare i selectbox
+            if selezione_alunno:
+                dati = dati_alunni.get(selezione_alunno, {})
+                st.session_state["genitore_select"] = dati.get("Nome Genitore", "")
+                st.session_state["telefono_select"] = dati.get("Telefono", "")
+                st.session_state["email_select"] = dati.get("Email", "")
+            elif "genitore_select" in st.session_state and st.session_state["genitore_select"]:
+                genitore = st.session_state["genitore_select"]
+                for al, d in dati_alunni.items():
+                    if d["Nome Genitore"] == genitore:
+                        st.session_state["alunno_1_select"] = al
+                        st.session_state["telefono_select"] = d.get("Telefono", "")
+                        st.session_state["email_select"] = d.get("Email", "")
+                        break
+            elif "email_select" in st.session_state and st.session_state["email_select"]:
+                email = st.session_state["email_select"]
+                for al, d in dati_alunni.items():
+                    if d["Email"] == email:
+                        st.session_state["alunno_1_select"] = al
+                        st.session_state["genitore_select"] = d.get("Nome Genitore", "")
+                        st.session_state["telefono_select"] = d.get("Telefono", "")
+                        break
+            elif "telefono_select" in st.session_state and st.session_state["telefono_select"]:
+                telefono = st.session_state["telefono_select"]
+                for al, d in dati_alunni.items():
+                    if d["Telefono"] == telefono:
+                        st.session_state["alunno_1_select"] = al
+                        st.session_state["genitore_select"] = d.get("Nome Genitore", "")
+                        st.session_state["email_select"] = d.get("Email", "")
+                        break
 
             # --- Altri alunni (dal 2 in poi) ---
             for i in range(2, st.session_state["num_figli"] + 1):
