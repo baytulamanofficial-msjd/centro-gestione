@@ -166,20 +166,22 @@ if check_password():
 
     # --- VISUALIZZAZIONE ---
     elif st.session_state["pagina"] == "visualizza":
-        if st.button("⬅️ Torna al Menu"):
-            st.session_state["pagina"] = "menu"
-            st.rerun()
-        st.title("Database")
-        try:
-            data = sheet.get_all_values()
+    if st.button("⬅️ Torna al Menu"):
+        st.session_state["pagina"] = "menu"
+        st.rerun()
+    st.title("Database")
+    try:
+        sheet = get_sheet()
+        data = sheet.get_all_values()
 
-# Prima riga vuota, intestazioni nella seconda
-if len(data) < 2:
-    st.warning("Database vuoto o senza intestazioni.")
-else:
-    headers = data[1]      # seconda riga = intestazioni
-    rows = data[2:]        # dati dalla terza in poi
-    df = pd.DataFrame(rows, columns=headers)
-    st.dataframe(df, use_container_width=True)
-        except:
-            st.error("Errore database")
+        # Prima riga vuota, intestazioni nella seconda
+        if len(data) < 2:
+            st.warning("Database vuoto o senza intestazioni.")
+        else:
+            headers = data[1]   # seconda riga = intestazioni
+            rows = data[2:]     # dati dalla terza in poi
+            df = pd.DataFrame(rows, columns=headers)
+            st.dataframe(df, use_container_width=True)
+
+    except Exception as e:
+        st.error(f"Errore database: {e}")
