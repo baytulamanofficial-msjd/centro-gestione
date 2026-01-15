@@ -70,12 +70,15 @@ try:
 
     # --- Legge dati dal database per completamento automatico ---
     data_sheet = sheet.get_all_values()
+    dati_alunni = {}
+    lista_alunni = []
+
     if len(data_sheet) >= 2:
         headers = data_sheet[1]
         rows = data_sheet[2:]
         df_db = pd.DataFrame(rows, columns=headers)
+
         # creiamo dizionario per autocompletamento
-        dati_alunni = {}
         for _, r in df_db.iterrows():
             dati_alunni[r["Nome Alunno"].strip()] = {
                 "Nome Genitore": r.get("Nome Genitore", ""),
@@ -83,32 +86,29 @@ try:
                 "Email": r.get("Email", "")
             }
         lista_alunni = list(dati_alunni.keys())
-    else:
-        dati_alunni = {}
-        lista_alunni = []
 
-# --- Nomi Alunni con menu a tendina ---
-nomi_alunni = []
-col_nome, col_piu = st.columns([0.9, 0.1])
-with col_nome:
-    selezione_alunno = st.selectbox("Nome Alunno 1", [""] + lista_alunni, key="alunno_1_select")
-    if selezione_alunno:
-        nomi_alunni.append(selezione_alunno)
-        # autocompleta gli altri campi
-        dati_selezionati = dati_alunni.get(selezione_alunno, {})
-        st.session_state["nome_genitore_auto"] = dati_selezionati.get("Nome Genitore", "")
-        st.session_state["telefono_auto"] = dati_selezionati.get("Telefono", "")
-        st.session_state["email_auto"] = dati_selezionati.get("Email", "")
-    else:
-        nomi_alunni.append("")
+    # --- Nomi Alunni con menu a tendina ---
+    nomi_alunni = []
+    col_nome, col_piu = st.columns([0.9, 0.1])
+    with col_nome:
+        selezione_alunno = st.selectbox("Nome Alunno 1", [""] + lista_alunni, key="alunno_1_select")
+        if selezione_alunno:
+            nomi_alunni.append(selezione_alunno)
+            # autocompleta gli altri campi
+            dati_selezionati = dati_alunni.get(selezione_alunno, {})
+            st.session_state["nome_genitore_auto"] = dati_selezionati.get("Nome Genitore", "")
+            st.session_state["telefono_auto"] = dati_selezionati.get("Telefono", "")
+            st.session_state["email_auto"] = dati_selezionati.get("Email", "")
+        else:
+            nomi_alunni.append("")
 
-with col_piu:
-    st.write(" ")
-    st.write(" ")
-    if st.button("➕"):
-        if st.session_state["num_figli"] < 7:
-            st.session_state["num_figli"] += 1
-            st.rerun()
+    with col_piu:
+        st.write(" ")
+        st.write(" ")
+        if st.button("➕"):
+            if st.session_state["num_figli"] < 7:
+                st.session_state["num_figli"] += 1
+                st.rerun()
 
 for i in range(2, st.session_state["num_figli"] + 1):
     nomi_alunni.append(st.text_input(f"Nome Alunno {i}", key=f"alunno_{i}"))
