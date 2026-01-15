@@ -88,42 +88,42 @@ if check_password():
                     }
                 lista_alunni = list(dati_alunni.keys())
 
-            # --- Nomi Alunni con menu a tendina ---
+                        # --- Nomi Alunni con menu a tendina ---
+            # Inizializza session_state se non esistono
+            if "alunno_1_select" not in st.session_state:
+                st.session_state["alunno_1_select"] = ""
+            if "genitore_select" not in st.session_state:
+                st.session_state["genitore_select"] = ""
+            if "telefono_select" not in st.session_state:
+                st.session_state["telefono_select"] = ""
+            if "email_select" not in st.session_state:
+                st.session_state["email_select"] = ""
+
+            # --- Nome Alunno principale con + ---
             nomi_alunni = []
             col_nome, col_piu = st.columns([0.9, 0.1])
             with col_nome:
-                selezione_alunno = st.selectbox("Nome Alunno 1", [""] + lista_alunni, key="alunno_1_select")
-                            # --- Autocompletamento bidirezionale corretto ---
-            # Aggiorno le session_state PRIMA di creare i selectbox
+                selezione_alunno = st.selectbox(
+                    "Nome Alunno 1",
+                    [""] + lista_alunni,
+                    key="alunno_1_select"
+                )
+                nomi_alunni.append(st.session_state["alunno_1_select"])
+
+            with col_piu:
+                st.write(" ")
+                st.write(" ")
+                if st.button("➕"):
+                    if st.session_state["num_figli"] < 7:
+                        st.session_state["num_figli"] += 1
+                        st.rerun()
+
+            # --- Aggiorna session_state per autocompletamento prima di creare gli altri selectbox ---
             if selezione_alunno:
                 dati = dati_alunni.get(selezione_alunno, {})
                 st.session_state["genitore_select"] = dati.get("Nome Genitore", "")
                 st.session_state["telefono_select"] = dati.get("Telefono", "")
                 st.session_state["email_select"] = dati.get("Email", "")
-            elif "genitore_select" in st.session_state and st.session_state["genitore_select"]:
-                genitore = st.session_state["genitore_select"]
-                for al, d in dati_alunni.items():
-                    if d["Nome Genitore"] == genitore:
-                        st.session_state["alunno_1_select"] = al
-                        st.session_state["telefono_select"] = d.get("Telefono", "")
-                        st.session_state["email_select"] = d.get("Email", "")
-                        break
-            elif "email_select" in st.session_state and st.session_state["email_select"]:
-                email = st.session_state["email_select"]
-                for al, d in dati_alunni.items():
-                    if d["Email"] == email:
-                        st.session_state["alunno_1_select"] = al
-                        st.session_state["genitore_select"] = d.get("Nome Genitore", "")
-                        st.session_state["telefono_select"] = d.get("Telefono", "")
-                        break
-            elif "telefono_select" in st.session_state and st.session_state["telefono_select"]:
-                telefono = st.session_state["telefono_select"]
-                for al, d in dati_alunni.items():
-                    if d["Telefono"] == telefono:
-                        st.session_state["alunno_1_select"] = al
-                        st.session_state["genitore_select"] = d.get("Nome Genitore", "")
-                        st.session_state["email_select"] = d.get("Email", "")
-                        break
 
             # --- Altri alunni (dal 2 in poi) ---
             for i in range(2, st.session_state["num_figli"] + 1):
@@ -131,16 +131,19 @@ if check_password():
 
             st.write("---")  # separatore fuori dal for
 
-            # --- Nomi Alunni / Genitori / Email / Telefono con menu a tendina e autocompletamento ---
-            # Creiamo anche le liste per i menu a tendina
-            lista_genitori = []
-            lista_email = []
-            lista_telefono = []
+            # --- Nomi Alunni / Genitori / Email / Telefono con menu a tendina ---
+            lista_genitori = [d.get("Nome Genitore") for d in dati_alunni.values() if d.get("Nome Genitore")]
+            lista_email = [d.get("Email") for d in dati_alunni.values() if d.get("Email")]
+            lista_telefono = [d.get("Telefono") for d in dati_alunni.values() if d.get("Telefono")]
 
-            for dati in dati_alunni.values():
-                if dati.get("Nome Genitore"): lista_genitori.append(dati["Nome Genitore"])
-                if dati.get("Email"): lista_email.append(dati["Email"])
-                if dati.get("Telefono"): lista_telefono.append(dati["Telefono"])
+            col1, col2 = st.columns(2)
+            with col1:
+                selezione_genitore = st.selectbox("Nome Genitore", [""] + lista_genitori, key="genitore_select")
+            with col2:
+                selezione_telefono = st.selectbox("Telefono", [""] + lista_telefono, key="telefono_select")
+            col3, col4 = st.columns(2)
+            with col3:
+                selezione_email = st.selectbox("Email", [""] + lista_email, key="email_select")
 
             # --- Menu a tendina per Genitore, Telefono, Email (il Nome Alunno principale resta quello con +) ---
             col1, col2 = st.columns(2)
