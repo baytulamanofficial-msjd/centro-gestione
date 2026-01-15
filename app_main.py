@@ -23,6 +23,7 @@ def check_password():
         with col2:
             u = st.text_input("User:")
             p = st.text_input("Password:", type="password")
+            ricordami = st.checkbox("Ricordami")
             if st.button("Accedi"):
                 if u == st.secrets["credentials"]["user"] and p == st.secrets["credentials"]["password"]:
                     st.session_state["password_correct"] = True
@@ -85,19 +86,26 @@ if check_password():
                 nomi_alunni.append(st.text_input(f"Nome Alunno {i}", key=f"alunno_{i}"))
 
             st.write("---")
-            
-            # --- SELEZIONE MODALITÀ (Fuori dal form per reattività immediata) ---
-            tipo_pagamento = st.radio("Seleziona modalità pagamento:", ["Un mese", "Più mesi"], horizontal=True)
 
             with st.form("modulo_dati_fissi"):
+                # Nome Genitore
                 nome_genitore = st.text_input("Nome Genitore")
+
+                # Telefono / Mail
                 col_tel, col_mail = st.columns(2)
                 with col_tel:
                     telefono = st.text_input("Telefono")
                 with col_mail:
                     email = st.text_input("Email")
-                
-                # --- LOGICA DA / A ---
+
+                # Modalità pagamento
+                tipo_pagamento = st.radio(
+                    "Seleziona modalità pagamento:",
+                    ["Un mese", "Più mesi"],
+                    horizontal=True
+                )
+
+                # Mese / Più mesi
                 mese_da, mese_a, mese_singolo = "", "", ""
                 if tipo_pagamento == "Un mese":
                     mese_singolo = st.selectbox("Seleziona il mese:", [""] + lista_mesi)
@@ -109,6 +117,7 @@ if check_password():
                     with col_m2:
                         mese_a = st.selectbox("Al mese:", [""] + lista_mesi)
 
+                # Importo / Data
                 col_imp, col_data = st.columns(2)
                 with col_imp:
                     importo = st.number_input("Importo (€):", min_value=0, value=0)
@@ -148,7 +157,7 @@ if check_password():
                                     registrati += 1
                         
                         if registrati > 0:
-                            st.success(f"Salvato con successo! ❤️")
+                            st.success(f"Salvato con successo!")
                             st.balloons()
                             st.session_state["num_figli"] = 1
                             st.rerun()
