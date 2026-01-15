@@ -3,43 +3,34 @@ import streamlit as st
 # Configurazione della pagina
 st.set_page_config(page_title="Baytul Aman Monza", page_icon="📖")
 
-# Funzione per gestire il login (Puoi cambiare le credenziali qui)
+# Funzione per gestire il login
 def check_password():
-    """Ritorna True se l'utente ha inserito le credenziali corrette."""
-
-    def password_entered():
-        """Controlla se la password è corretta."""
-        if st.session_state["username"] == "admin" and st.session_state["password"] == "monza2024":
-            st.session_state["password_correct"] = True
-            del st.session_state["password"]  # Rimuove la password dalla memoria
-            del st.session_state["username"]
-        else:
-            st.session_state["password_correct"] = False
-
     if "password_correct" not in st.session_state:
-        # Schermata di Login
-        st.markdown("<h1 style='text-align: center;'>Baytul Aman Monza</h1>", unsafe_content_type=True)
-        st.markdown("<h3 style='text-align: center;'>Gestione Pagamenti</h3>", unsafe_content_type=True)
+        # Titoli centrati (CORRETTI)
+        st.markdown("<h1 style='text-align: center;'>Baytul Aman Monza</h1>", unsafe_allow_html=True)
+        st.markdown("<h3 style='text-align: center;'>Gestione Pagamenti</h3>", unsafe_allow_html=True)
         
         with st.container():
             col1, col2, col3 = st.columns([1,2,1])
             with col2:
-                st.text_input("User:", key="username")
-                st.text_input("Password:", type="password", key="password")
+                user_input = st.text_input("User:")
+                pass_input = st.text_input("Password:", type="password")
                 st.checkbox("Ricordami")
-                st.button("Accedi", on_click=password_entered)
                 
-                if "password_correct" in st.session_state and not st.session_state["password_correct"]:
-                    st.error("😕 Utente o password errati")
+                if st.button("Accedi"):
+                    # Controlla le credenziali nel file secrets.toml
+                    if user_input == st.secrets["credentials"]["user"] and pass_input == st.secrets["credentials"]["password"]:
+                        st.session_state["password_correct"] = True
+                        st.rerun()
+                    else:
+                        st.error("😕 Utente o password errati")
         return False
-    else:
-        return True
+    return True
 
 # Controllo se l'utente è loggato
 if check_password():
-    # --- DA QUI INIZIA L'INTERFACCIA DOPO IL LOGIN ---
+    st.balloons() # Un piccolo festeggiamento per il login riuscito!
     st.success("Benvenuto amore mio! Accesso effettuato.")
     st.title("Pannello di Controllo")
     
-    # Qui inseriremo il modulo per i pagamenti nel prossimo passo
-    st.info("Pronto per il Passo 2: Collegamento al database!")
+    st.info("Siamo pronti per collegare il database Google Sheets ora!")
