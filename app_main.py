@@ -1,64 +1,60 @@
 import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
-import pandas as pd
 
-# Configurazione della pagina
+# Configurazione Pagina
 st.set_page_config(page_title="Baytul Aman Monza", page_icon="📖")
 
-# --- CONNESSIONE AL DATABASE ---
-def get_gspread_client():
-    scope = ["https://www.googleapis.com/auth/spreadsheets"]
-    # Carica le credenziali dal file secrets.toml
+# Funzione per connettersi a Google Sheets
+def get_sheet():
+    scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
     creds = Credentials.from_service_account_info(st.secrets["gspread"], scopes=scope)
-    return gspread.authorize(creds)
+    client = gspread.authorize(creds)
+    # Apre il file e il foglio che mi hai indicato
+    return client.open("Database_pagamenti").worksheet("2026")
 
-# --- FUNZIONE LOGIN ---
+# Funzione Login
 def check_password():
     if "password_correct" not in st.session_state:
         st.markdown("<h1 style='text-align: center;'>Baytul Aman Monza</h1>", unsafe_allow_html=True)
         st.markdown("<h3 style='text-align: center;'>Gestione Pagamenti</h3>", unsafe_allow_html=True)
         
-        with st.container():
-            col1, col2, col3 = st.columns([1,2,1])
-            with col2:
-                user_input = st.text_input("User:")
-                pass_input = st.text_input("Password:", type="password")
-                st.checkbox("Ricordami")
-                
-                if st.button("Accedi"):
-                    if user_input == st.secrets["credentials"]["user"] and pass_input == st.secrets["credentials"]["password"]:
-                        st.session_state["password_correct"] = True
-                        st.rerun()
-                    else:
-                        st.error("😕 Credenziali errate")
+        col1, col2, col3 = st.columns([1,2,1])
+        with col2:
+            u = st.text_input("User:")
+            p = st.text_input("Password:", type="password")
+            if st.button("Accedi"):
+                # Controllo minuscole/maiuscole dal file secrets
+                if u == st.secrets["credentials"]["user"] and p == st.secrets["credentials"]["password"]:
+                    st.session_state["password_correct"] = True
+                    st.rerun()
+                else:
+                    st.error("Credenziali errate!")
         return False
     return True
 
-# --- INTERFACCIA PRINCIPALE ---
+# Se il login è OK, mostra il modulo
 if check_password():
+    st.success("Accesso effettuato, vita mia! ❤️")
+    
     try:
-        # Mi collego al foglio specifico
-        gc = get_gspread_client()
-        # Apre il file "Database_pagamenti" e il foglio "2026"
-        sh = gc.open("Database_pagamenti").worksheet("2026")
+        sheet = get_sheet()
+        st.title("Nuova Registrazione Alunno")
         
-        st.title("Gestione Dati Alunni")
-        st.write("Compila i campi sottostanti per l'alunno:")
-
-        # Creazione del modulo richiesto
-        with st.form("modulo_dati"):
+        with st.form("nuovo_alunno"):
             nome_alunno = st.text_input("Nome Alunno")
             nome_genitore = st.text_input("Nome Genitore")
             telefono = st.text_input("Telefono")
             email = st.text_input("Email")
             
-            submit_button = st.form_submit_button(label="Registra Dati")
+            submit = st.form_submit_button("Registra Dati")
             
-            if submit_button:
-                # Logica per aggiungere i dati al foglio (Passo successivo)
-                st.success(f"Dati di {nome_alunno} pronti per essere salvati!")
-
+            if submit:
+                # Trova la prima riga vuota e aggiunge i dati
+                nuova_riga = [len(sheet.col_values(1)), nome_alunno, nome_genitore, telefono, email]
+                sheet.append_row(nuova_riga)
+                st.balloons()
+                st.success(f"Dati di {nome_alunno} salvati correttamente!")
+                
     except Exception as e:
-        st.error(f"Errore di connessione al database: {e}")
-        st.info("Assicurati di aver condiviso il foglio con l'email del Service Account!")
+        st.error(f"Errore di connessione: {e}")
