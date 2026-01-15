@@ -37,7 +37,6 @@ if check_password():
     if "pagina" not in st.session_state:
         st.session_state["pagina"] = "menu"
     
-    # Inizializziamo il numero di figli se non esiste
     if "num_figli" not in st.session_state:
         st.session_state["num_figli"] = 1
 
@@ -59,7 +58,7 @@ if check_password():
     # --- REGISTRAZIONE ---
     elif st.session_state["pagina"] == "registro":
         if st.button("⬅️ Torna al Menu"):
-            st.session_state["num_figli"] = 1 # Reset quando si torna al menu
+            st.session_state["num_figli"] = 1
             st.session_state["pagina"] = "menu"
             st.rerun()
         st.title("Nuova Registrazione")
@@ -94,7 +93,7 @@ if check_password():
                 
                 col_a, col_b = st.columns(2)
                 with col_a:
-                    importo = st.number_input("Importo (€):", min_value=0, value=0) # Messo a 0 per default
+                    importo = st.number_input("Importo (€):", min_value=0, value=0)
                 with col_b:
                     data_pagamento = st.date_input("Data pagamento:", datetime.now())
 
@@ -112,12 +111,11 @@ if check_password():
                 submit = st.form_submit_button("Salva Tutti")
                 
                 if submit:
-                    # --- CONTROLLO CAMPI OBBLIGATORI ---
                     errori = []
                     if not nomi_alunni[0]: errori.append("Nome Alunno")
                     if not nome_genitore: errori.append("Nome Genitore")
                     if not email: errori.append("Email")
-                    if importo <= 0: errori.append("Importo (deve essere maggiore di 0)")
+                    if importo <= 0: errori.append("Importo")
                     
                     if tipo_pagamento == "Un mese":
                         if not mese_selezione: errori.append("Mese")
@@ -127,17 +125,27 @@ if check_password():
                     if errori:
                         st.error(f"⚠️ Per favore, compila i seguenti campi mancanti: {', '.join(errori)}")
                     else:
-                        # --- SALVATAGGIO SE TUTTO OK ---
+                        # --- INTELLIGENZA: CONTROLLO ESISTENZA ---
+                        nomi_esistenti = sheet.col_values(2) # Legge i nomi nella colonna B
+                        nomi_esistenti = [n.strip().lower() for n in nomi_esistenti]
+                        
                         prossimo_numero = len([x for x in sheet.col_values(2) if x])
+                        registrati = 0
+                        
                         for i, nome in enumerate(nomi_alunni):
                             if nome:
-                                nuova_riga = [prossimo_numero + i, nome, nome_genitore, telefono, email, importo, str(data_pagamento), responsabile]
-                                sheet.append_row(nuova_riga, table_prefix='USER_ENTERED')
+                                if nome.strip().lower() in nomi_esistenti:
+                                    st.warning(f"⚠️ L'alunno '{nome}' è già presente nel database. Salto questa riga.")
+                                else:
+                                    nuova_riga = [prossimo_numero + registrati, nome, nome_genitore, telefono, email, importo, str(data_pagamento), responsabile]
+                                    sheet.append_row(nuova_riga, table_prefix='USER_ENTERED')
+                                    registrati += 1
                         
-                        st.success(f"Registrazione completata con successo! ❤️")
-                        st.balloons()
-                        st.session_state["num_figli"] = 1
-                        st.rerun() # Ricarica per pulire i campi
+                        if registrati > 0:
+                            st.success(f"Registrazione completata per {registrati} nuovi alunni! ❤️")
+                            st.balloons()
+                            st.session_state["num_figli"] = 1
+                            st.rerun()
                         
         except Exception as e:
             st.error(f"Errore: {e}")
