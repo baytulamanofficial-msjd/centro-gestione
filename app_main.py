@@ -60,18 +60,40 @@ if check_password():
         st.title("Nuova Registrazione")
         try:
             sheet = get_sheet()
+            
+            # Lista dei mesi per le caselle di selezione
+            lista_mesi = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", 
+                          "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"]
+
             with st.form("modulo_dati"):
                 nome_alunno = st.text_input("Nome Alunno")
                 nome_genitore = st.text_input("Nome Genitore")
                 telefono = st.text_input("Telefono")
                 email = st.text_input("Email")
+                
+                st.write("---")
+                # Nuova funzione: Scelta tra uno o più mesi
+                tipo_pagamento = st.radio("Seleziona modalità pagamento:", ["Un mese", "Più mesi"], horizontal=True)
+                
+                if tipo_pagamento == "Un mese":
+                    mese_singolo = st.selectbox("Seleziona il mese:", lista_mesi)
+                else:
+                    col_m1, col_m2 = st.columns(2)
+                    with col_m1:
+                        mese_da = st.selectbox("Da:", lista_mesi)
+                    with col_m2:
+                        mese_a = st.selectbox("A:", lista_mesi)
+                
                 submit = st.form_submit_button("Salva")
+                
                 if submit:
                     # Calcola riga basandosi sulla colonna B (nomi) per evitare righe vuote
                     prossimo_numero = len([x for x in sheet.col_values(2) if x]) 
                     nuova_riga = [prossimo_numero, nome_alunno, nome_genitore, telefono, email]
                     sheet.append_row(nuova_riga, table_prefix='USER_ENTERED')
-                    st.success("Dati salvati!")
+                    st.success("Dati salvati con successo!")
+                    st.balloons()
+                    
         except Exception as e:
             st.error(f"Errore: {e}")
 
@@ -83,11 +105,9 @@ if check_password():
         st.title("Database Baytul Aman")
         try:
             sheet = get_sheet()
-            # Leggiamo tutto come lista di liste per evitare l'errore dei titoli duplicati
             all_values = sheet.get_all_values()
-            # Usiamo la riga 2 come intestazione (indice 1 in Python)
             df = pd.DataFrame(all_values[2:], columns=all_values[1]) 
             st.dataframe(df, use_container_width=True)
         except Exception as e:
             st.error(f"Errore caricamento: {e}")
-            st.info("Assicurati che la riga 2 del foglio contenga i nomi delle colonne (Nome, Genitore, Gennaio...)")
+            st.info("Assicurati che la riga 2 del foglio contenga i nomi delle colonne.")
