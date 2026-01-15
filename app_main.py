@@ -117,13 +117,67 @@ if check_password():
 
             st.write("---")  # separatore fuori dal for
 
-            # --- Nome Genitore / Telefono / Email ---
-            nome_genitore = st.text_input("Nome Genitore", value=st.session_state.get("nome_genitore_auto", ""))
-            col_tel, col_mail = st.columns(2)
-            with col_tel:
-                telefono = st.text_input("Telefono", value=st.session_state.get("telefono_auto", ""))
-            with col_mail:
-                email = st.text_input("Email", value=st.session_state.get("email_auto", ""))
+                        # --- Nomi Alunni / Genitori / Email / Telefono con menu a tendina e autocompletamento ---
+            # Creiamo anche le liste per i menu a tendina
+            lista_genitori = []
+            lista_email = []
+            lista_telefono = []
+
+            for dati in dati_alunni.values():
+                if dati.get("Nome Genitore"): lista_genitori.append(dati["Nome Genitore"])
+                if dati.get("Email"): lista_email.append(dati["Email"])
+                if dati.get("Telefono"): lista_telefono.append(dati["Telefono"])
+
+            # --- Campo principale alunno ---
+            col1, col2 = st.columns(2)
+            with col1:
+                selezione_alunno = st.selectbox("Nome Alunno", [""] + lista_alunni, key="alunno_select")
+            with col2:
+                selezione_genitore = st.selectbox("Nome Genitore", [""] + lista_genitori, key="genitore_select")
+
+            col3, col4 = st.columns(2)
+            with col3:
+                selezione_telefono = st.selectbox("Telefono", [""] + lista_telefono, key="telefono_select")
+            with col4:
+                selezione_email = st.selectbox("Email", [""] + lista_email, key="email_select")
+
+            # --- Autocompletamento bidirezionale ---
+            def aggiorna_session_state(alunno=None, genitore=None, email=None, telefono=None):
+                if alunno:
+                    dati = dati_alunni.get(alunno, {})
+                    st.session_state["genitore_select"] = dati.get("Nome Genitore", "")
+                    st.session_state["telefono_select"] = dati.get("Telefono", "")
+                    st.session_state["email_select"] = dati.get("Email", "")
+                elif genitore:
+                    for al, d in dati_alunni.items():
+                        if d["Nome Genitore"] == genitore:
+                            st.session_state["alunno_select"] = al
+                            st.session_state["telefono_select"] = d.get("Telefono", "")
+                            st.session_state["email_select"] = d.get("Email", "")
+                            break
+                elif email:
+                    for al, d in dati_alunni.items():
+                        if d["Email"] == email:
+                            st.session_state["alunno_select"] = al
+                            st.session_state["genitore_select"] = d.get("Nome Genitore", "")
+                            st.session_state["telefono_select"] = d.get("Telefono", "")
+                            break
+                elif telefono:
+                    for al, d in dati_alunni.items():
+                        if d["Telefono"] == telefono:
+                            st.session_state["alunno_select"] = al
+                            st.session_state["genitore_select"] = d.get("Nome Genitore", "")
+                            st.session_state["email_select"] = d.get("Email", "")
+                            break
+
+            # Trigger autocompletamento
+            if selezione_alunno: aggiorna_session_state(alunno=selezione_alunno)
+            elif selezione_genitore: aggiorna_session_state(genitore=selezione_genitore)
+            elif selezione_email: aggiorna_session_state(email=selezione_email)
+            elif selezione_telefono: aggiorna_session_state(telefono=selezione_telefono)
+
+            # --- Aggiungi al tuo array nomi_alunni per gestione num_figli ---
+            nomi_alunni = [st.session_state["alunno_select"] if st.session_state["alunno_select"] else ""]
 
             # --- Modalità pagamento (reattiva) ---
             tipo_pagamento = st.radio(
