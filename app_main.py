@@ -62,67 +62,67 @@ if check_password():
             st.session_state["pagina"] = "menu"
             st.rerun()
         st.title("Nuova Registrazione")
-        
-try:
-    sheet = get_sheet()
-    lista_mesi = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", 
-                  "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"]
 
-    # --- Legge dati dal database per completamento automatico ---
-    data_sheet = sheet.get_all_values()
-    dati_alunni = {}
-    lista_alunni = []
+        try:
+            sheet = get_sheet()
+            lista_mesi = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", 
+                          "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"]
 
-    if len(data_sheet) >= 2:
-        headers = data_sheet[1]
-        rows = data_sheet[2:]
-        df_db = pd.DataFrame(rows, columns=headers)
+            # --- Legge dati dal database per completamento automatico ---
+            data_sheet = sheet.get_all_values()
+            dati_alunni = {}
+            lista_alunni = []
 
-        # Creiamo dizionario per autocompletamento
-        for _, r in df_db.iterrows():
-            dati_alunni[r["Nome Alunno"].strip()] = {
-                "Nome Genitore": r.get("Nome Genitore", ""),
-                "Telefono": r.get("Telefono", ""),
-                "Email": r.get("Email", "")
-            }
-        lista_alunni = list(dati_alunni.keys())
+            if len(data_sheet) >= 2:
+                headers = data_sheet[1]
+                rows = data_sheet[2:]
+                df_db = pd.DataFrame(rows, columns=headers)
 
-    # --- Nomi Alunni con menu a tendina ---
-    nomi_alunni = []
-    col_nome, col_piu = st.columns([0.9, 0.1])
-    with col_nome:
-        selezione_alunno = st.selectbox("Nome Alunno 1", [""] + lista_alunni, key="alunno_1_select")
-        if selezione_alunno:
-            nomi_alunni.append(selezione_alunno)
-            # autocompleta gli altri campi
-            dati_selezionati = dati_alunni.get(selezione_alunno, {})
-            st.session_state["nome_genitore_auto"] = dati_selezionati.get("Nome Genitore", "")
-            st.session_state["telefono_auto"] = dati_selezionati.get("Telefono", "")
-            st.session_state["email_auto"] = dati_selezionati.get("Email", "")
-        else:
-            nomi_alunni.append("")
+                # Creiamo dizionario per autocompletamento
+                for _, r in df_db.iterrows():
+                    dati_alunni[r["Nome Alunno"].strip()] = {
+                        "Nome Genitore": r.get("Nome Genitore", ""),
+                        "Telefono": r.get("Telefono", ""),
+                        "Email": r.get("Email", "")
+                    }
+                lista_alunni = list(dati_alunni.keys())
 
-    with col_piu:
-        st.write(" ")
-        st.write(" ")
-        if st.button("➕"):
-            if st.session_state["num_figli"] < 7:
-                st.session_state["num_figli"] += 1
-                st.rerun()
+            # --- Nomi Alunni con menu a tendina ---
+            nomi_alunni = []
+            col_nome, col_piu = st.columns([0.9, 0.1])
+            with col_nome:
+                selezione_alunno = st.selectbox("Nome Alunno 1", [""] + lista_alunni, key="alunno_1_select")
+                if selezione_alunno:
+                    nomi_alunni.append(selezione_alunno)
+                    # autocompleta gli altri campi
+                    dati_selezionati = dati_alunni.get(selezione_alunno, {})
+                    st.session_state["nome_genitore_auto"] = dati_selezionati.get("Nome Genitore", "")
+                    st.session_state["telefono_auto"] = dati_selezionati.get("Telefono", "")
+                    st.session_state["email_auto"] = dati_selezionati.get("Email", "")
+                else:
+                    nomi_alunni.append("")
 
-    # --- Altri alunni (dal 2 in poi) ---
-    for i in range(2, st.session_state["num_figli"] + 1):
-        nomi_alunni.append(st.text_input(f"Nome Alunno {i}", key=f"alunno_{i}"))
+            with col_piu:
+                st.write(" ")
+                st.write(" ")
+                if st.button("➕"):
+                    if st.session_state["num_figli"] < 7:
+                        st.session_state["num_figli"] += 1
+                        st.rerun()
 
-    st.write("---")  # separatore fuori dal for
+            # --- Altri alunni (dal 2 in poi) ---
+            for i in range(2, st.session_state["num_figli"] + 1):
+                nomi_alunni.append(st.text_input(f"Nome Alunno {i}", key=f"alunno_{i}"))
 
-    # --- Nome Genitore / Telefono / Email ---
-    nome_genitore = st.text_input("Nome Genitore", value=st.session_state.get("nome_genitore_auto", ""))
-    col_tel, col_mail = st.columns(2)
-    with col_tel:
-        telefono = st.text_input("Telefono", value=st.session_state.get("telefono_auto", ""))
-    with col_mail:
-        email = st.text_input("Email", value=st.session_state.get("email_auto", ""))
+            st.write("---")  # separatore fuori dal for
+
+            # --- Nome Genitore / Telefono / Email ---
+            nome_genitore = st.text_input("Nome Genitore", value=st.session_state.get("nome_genitore_auto", ""))
+            col_tel, col_mail = st.columns(2)
+            with col_tel:
+                telefono = st.text_input("Telefono", value=st.session_state.get("telefono_auto", ""))
+            with col_mail:
+                email = st.text_input("Email", value=st.session_state.get("email_auto", ""))
 
             # --- Modalità pagamento (reattiva) ---
             tipo_pagamento = st.radio(
@@ -160,7 +160,7 @@ try:
                     if not nome_genitore: errori.append("Nome Genitore")
                     if not email: errori.append("Email")
                     if importo <= 0: errori.append("Importo")
-                    
+
                     if tipo_pagamento == "Un mese" and not mese_singolo: errori.append("Mese")
                     if tipo_pagamento == "Più mesi" and (not mese_da or not mese_a): errori.append("Mesi (Da/A)")
 
@@ -170,9 +170,9 @@ try:
                         nomi_esistenti = [n.strip().lower() for n in sheet.col_values(2)]
                         prossimo_id = len([x for x in sheet.col_values(1) if x])
                         registrati = 0
-                        
+
                         mese_testo = mese_singolo if tipo_pagamento == "Un mese" else f"Da {mese_da} a {mese_a}"
-                        
+
                         for nome in nomi_alunni:
                             if nome and nome.strip():
                                 if nome.strip().lower() in nomi_esistenti:
@@ -181,17 +181,17 @@ try:
                                     riga = [prossimo_id + registrati, nome, nome_genitore, telefono, email, importo, str(data_pagamento), responsabile, mese_testo]
                                     sheet.append_row(riga)
                                     registrati += 1
-                        
+
                         if registrati > 0:
                             st.success("Salvato con successo!")
                             st.balloons()
                             st.session_state["num_figli"] = 1
                             st.rerun()
-                        
+
         except Exception as e:
             st.error(f"Errore: {e}")
 
-       # --- VISUALIZZAZIONE ---
+    # --- VISUALIZZAZIONE ---
     elif st.session_state.get("pagina") == "visualizza":
         if st.button("⬅️ Torna al Menu"):
             st.session_state["pagina"] = "menu"
