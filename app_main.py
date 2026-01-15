@@ -66,7 +66,7 @@ if check_password():
 try:
     sheet = get_sheet()
     lista_mesi = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", 
-                          "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"]
+                  "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"]
 
     # --- Legge dati dal database per completamento automatico ---
     data_sheet = sheet.get_all_values()
@@ -78,7 +78,7 @@ try:
         rows = data_sheet[2:]
         df_db = pd.DataFrame(rows, columns=headers)
 
-        # creiamo dizionario per autocompletamento
+        # Creiamo dizionario per autocompletamento
         for _, r in df_db.iterrows():
             dati_alunni[r["Nome Alunno"].strip()] = {
                 "Nome Genitore": r.get("Nome Genitore", ""),
@@ -110,17 +110,19 @@ try:
                 st.session_state["num_figli"] += 1
                 st.rerun()
 
-for i in range(2, st.session_state["num_figli"] + 1):
-    nomi_alunni.append(st.text_input(f"Nome Alunno {i}", key=f"alunno_{i}"))
-            st.write("---")
+    # --- Altri alunni (dal 2 in poi) ---
+    for i in range(2, st.session_state["num_figli"] + 1):
+        nomi_alunni.append(st.text_input(f"Nome Alunno {i}", key=f"alunno_{i}"))
 
-            # --- Nome Genitore ---
-nome_genitore = st.text_input("Nome Genitore", value=st.session_state.get("nome_genitore_auto", ""))
-col_tel, col_mail = st.columns(2)
-with col_tel:
-    telefono = st.text_input("Telefono", value=st.session_state.get("telefono_auto", ""))
-with col_mail:
-    email = st.text_input("Email", value=st.session_state.get("email_auto", ""))
+    st.write("---")  # separatore fuori dal for
+
+    # --- Nome Genitore / Telefono / Email ---
+    nome_genitore = st.text_input("Nome Genitore", value=st.session_state.get("nome_genitore_auto", ""))
+    col_tel, col_mail = st.columns(2)
+    with col_tel:
+        telefono = st.text_input("Telefono", value=st.session_state.get("telefono_auto", ""))
+    with col_mail:
+        email = st.text_input("Email", value=st.session_state.get("email_auto", ""))
 
             # --- Modalità pagamento (reattiva) ---
             tipo_pagamento = st.radio(
