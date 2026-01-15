@@ -68,7 +68,7 @@ if check_password():
             lista_mesi = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", 
                           "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"]
 
-            # Contenitore per i nomi degli alunni (fuori dal form per permettere il "+" dinamico)
+            # 1. Nomi Alunni (Dinamico con tasto +)
             with st.container():
                 nomi_alunni = []
                 col_nome, col_piu = st.columns([0.9, 0.1])
@@ -77,7 +77,7 @@ if check_password():
                 with col_piu:
                     st.write(" ")
                     st.write(" ")
-                    if st.button("➕", help="Aggiungi un altro figlio"):
+                    if st.button("➕"):
                         if st.session_state["num_figli"] < 7:
                             st.session_state["num_figli"] += 1
                             st.rerun()
@@ -85,18 +85,20 @@ if check_password():
                 for i in range(2, st.session_state["num_figli"] + 1):
                     nomi_alunni.append(st.text_input(f"Nome Alunno {i}", key=f"alunno_{i}"))
 
-            # Form per il resto dei dati
-            with st.form("modulo_dati_completo"):
+            # 2. Form Dati
+            with st.form("modulo_finale"):
                 nome_genitore = st.text_input("Nome Genitore")
-                telefono = st.text_input("Telefono")
-                email = st.text_input("Email")
+                col_tel, col_mail = st.columns(2)
+                with col_tel:
+                    telefono = st.text_input("Telefono")
+                with col_mail:
+                    email = st.text_input("Email")
                 
+                st.write("---")
                 tipo_pagamento = st.radio("Seleziona modalità pagamento:", ["Un mese", "Più mesi"], horizontal=True)
                 
-                # Sezione Mesi Dinamica
-                mese_da, mese_a, mese_selezione = None, None, None
-                
-                # Usiamo un contenitore vuoto per far apparire i campi giusti
+                # --- QUESTA È LA PARTE CHE HO SISTEMATO PER TE ---
+                mese_da, mese_a, mese_selezione = "", "", ""
                 if tipo_pagamento == "Un mese":
                     mese_selezione = st.selectbox("Seleziona il mese:", [""] + lista_mesi)
                 else:
@@ -105,11 +107,12 @@ if check_password():
                         mese_da = st.selectbox("Da:", [""] + lista_mesi)
                     with col_m2:
                         mese_a = st.selectbox("A:", [""] + lista_mesi)
-                
-                col_a, col_b = st.columns(2)
-                with col_a:
+                # ------------------------------------------------
+
+                col_imp, col_data = st.columns(2)
+                with col_imp:
                     importo = st.number_input("Importo (€):", min_value=0, value=0)
-                with col_b:
+                with col_data:
                     data_pagamento = st.date_input("Data pagamento:", datetime.now())
 
                 responsabile = st.text_input("Responsabile:", value="Sheikh Mahdy Hasan")
@@ -122,50 +125,46 @@ if check_password():
                     if not nome_genitore: errori.append("Nome Genitore")
                     if not email: errori.append("Email")
                     if importo <= 0: errori.append("Importo")
-                    
                     if tipo_pagamento == "Un mese" and not mese_selezione: errori.append("Mese")
                     if tipo_pagamento == "Più mesi" and (not mese_da or not mese_a): errori.append("Mesi (Da/A)")
 
                     if errori:
-                        st.error(f"⚠️ Per favore, compila i seguenti campi mancanti: {', '.join(errori)}")
+                        st.error(f"⚠️ Compila: {', '.join(errori)}")
                     else:
-                        # CONTROLLO ESISTENZA
-                        nomi_esistenti = sheet.col_values(2)
-                        nomi_esistenti = [n.strip().lower() for n in nomi_esistenti]
-                        
+                        # Controllo duplicati e Salvataggio
+                        nomi_esistenti = [n.strip().lower() for n in sheet.col_values(2)]
                         prossimo_id = len([x for x in sheet.col_values(1) if x])
                         registrati = 0
                         
-                        mese_testo = mese_selezione if tipo_pagamento == "Un mese" else f"{mese_da}-{mese_a}"
+                        testo_mese = mese_selezione if tipo_pagamento == "Un mese" else f"{mese_da}-{mese_a}"
                         
                         for nome in nomi_alunni:
                             if nome and nome.strip():
                                 if nome.strip().lower() in nomi_esistenti:
-                                    st.warning(f"⚠️ L'alunno '{nome}' è già nel database. Salto riga.")
+                                    st.warning(f"'{nome}' esiste già. Salto.")
                                 else:
-                                    nuova_riga = [prossimo_id + registrati, nome, nome_genitore, telefono, email, importo, str(data_pagamento), responsabile, mese_testo]
-                                    sheet.append_row(nuova_riga)
+                                    riga = [prossimo_id + registrati, nome, nome_genitore, telefono, email, importo, str(data_pagamento), responsabile, testo_mese]
+                                    sheet.append_row(riga)
                                     registrati += 1
                         
                         if registrati > 0:
-                            st.success(f"Registrato con successo {registrati} alunni! ❤️")
+                            st.success(f"Salvato con successo! ❤️")
                             st.balloons()
                             st.session_state["num_figli"] = 1
                             st.rerun()
                         
         except Exception as e:
-            st.error(f"Errore tecnico: {e}")
+            st.error(f"Errore: {e}")
 
     # --- VISUALIZZAZIONE ---
     elif st.session_state["pagina"] == "visualizza":
         if st.button("⬅️ Torna al Menu"):
             st.session_state["pagina"] = "menu"
             st.rerun()
-        st.title("Database Baytul Aman")
+        st.title("Database")
         try:
             sheet = get_sheet()
-            all_values = sheet.get_all_values()
-            df = pd.DataFrame(all_values[2:], columns=all_values[1]) 
+            df = pd.DataFrame(sheet.get_all_records()) 
             st.dataframe(df, use_container_width=True)
-        except Exception as e:
-            st.error(f"Errore caricamento: {e}")
+        except:
+            st.error("Errore database")
