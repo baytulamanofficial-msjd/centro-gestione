@@ -37,7 +37,6 @@ def check_password():
 if check_password():
     if "pagina" not in st.session_state:
         st.session_state["pagina"] = "menu"
-    
     if "num_figli" not in st.session_state:
         st.session_state["num_figli"] = 1
 
@@ -164,24 +163,24 @@ if check_password():
         except Exception as e:
             st.error(f"Errore: {e}")
 
-    # --- VISUALIZZAZIONE ---
-elif st.session_state.get("pagina") == "visualizza":
-    if st.button("⬅️ Torna al Menu"):
-        st.session_state["pagina"] = "menu"
-        st.rerun()
-    st.title("Database")
-    try:
-        sheet = get_sheet()
-        data = sheet.get_all_values()
+       # --- VISUALIZZAZIONE ---
+    elif st.session_state.get("pagina") == "visualizza":
+        if st.button("⬅️ Torna al Menu"):
+            st.session_state["pagina"] = "menu"
+            st.rerun()
+        st.title("Database")
+        try:
+            sheet = get_sheet()
+            data = sheet.get_all_values()
 
-        # Prima riga vuota, intestazioni nella seconda
-        if len(data) < 2:
-            st.warning("Database vuoto o senza intestazioni.")
-        else:
-            headers = data[1]   # seconda riga = intestazioni
-            rows = data[2:]     # dati dalla terza in poi
-            df = pd.DataFrame(rows, columns=headers)
-            st.dataframe(df, use_container_width=True)
+            # Prima riga vuota, intestazioni nella seconda
+            if len(data) < 2:
+                st.warning("Database vuoto o senza intestazioni.")
+            else:
+                headers = data[1]   # seconda riga = intestazioni
+                rows = data[2:]     # dati dalla terza in poi
+                df = pd.DataFrame(rows, columns=headers)
+                st.dataframe(df, use_container_width=True)
 
-    except Exception as e:
-        st.error(f"Errore database: {e}")
+        except Exception as e:
+            st.error(f"Errore database: {e}")
