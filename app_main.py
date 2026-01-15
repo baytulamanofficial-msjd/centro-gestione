@@ -177,6 +177,28 @@ if check_password():
             # --- Aggiungi al tuo array nomi_alunni per gestione num_figli ---
             nomi_alunni = [st.session_state["alunno_1_select"] if st.session_state["alunno_1_select"] else ""]
 
+                       # --- Filtra mesi non pagati per l'alunno selezionato ---
+            mesi_non_pagati = lista_mesi.copy()  # partiamo da tutti i mesi
+            if selezione_alunno:
+                try:
+                    col_mesi = sheet.col_values(9)  # colonna dove sono salvati i mesi (9 = colonna I)
+                    col_nomi = sheet.col_values(2)  # colonna Nome Alunno
+                    for nome, mese in zip(col_nomi[2:], col_mesi[2:]):  # saltando intestazioni
+                        if nome.strip().lower() == selezione_alunno.strip().lower():
+                            # rimuovo i mesi già pagati
+                            if "Da " in mese or "a " in mese:
+                                # caso "Da X a Y"
+                                partenza, fine = mese.replace("Da ","").split(" a ")
+                                idx_partenza = lista_mesi.index(partenza)
+                                idx_fine = lista_mesi.index(fine)
+                                for i in range(idx_partenza, idx_fine+1):
+                                    if lista_mesi[i] in mesi_non_pagati:
+                                        mesi_non_pagati.remove(lista_mesi[i])
+                            else:
+                                if mese in mesi_non_pagati:
+                                    mesi_non_pagati.remove(mese)
+                except Exception as e:
+                    st.error(f"Errore nel filtrare mesi: {e}")
 
             # --- Modalità pagamento (reattiva) ---
             tipo_pagamento = st.radio(
@@ -185,17 +207,17 @@ if check_password():
                 horizontal=True
             )
 
-            # --- Mese / Più mesi ---
+                       # --- Mese / Più mesi (aggiornato con mesi non pagati) ---
             mese_da, mese_a, mese_singolo = "", "", ""
             if tipo_pagamento == "Un mese":
-                mese_singolo = st.selectbox("Seleziona il mese:", [""] + lista_mesi)
+                mese_singolo = st.selectbox("Seleziona il mese:", [""] + mesi_non_pagati)
             else:
                 st.write("Seleziona l'intervallo di mesi:")
                 col_m1, col_m2 = st.columns(2)
                 with col_m1:
-                    mese_da = st.selectbox("Da mese:", [""] + lista_mesi)
+                    mese_da = st.selectbox("Da mese:", [""] + mesi_non_pagati)
                 with col_m2:
-                    mese_a = st.selectbox("Al mese:", [""] + lista_mesi)
+                    mese_a = st.selectbox("Al mese:", [""] + mesi_non_pagati)
 
             # --- FORM SOLO PER SALVATAGGIO ---
             with st.form("modulo_dati_fissi"):
