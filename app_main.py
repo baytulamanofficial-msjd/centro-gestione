@@ -42,7 +42,7 @@ if check_password():
         st.session_state["num_figli"] = 1
 
     # --- MENU PRINCIPALE ---
-    if st.session_state["pagina"] == "menu":
+    if st.session_state.get("pagina", "menu") == "menu":
         st.markdown("<h1 style='text-align: center;'>Baytul Aman Monza</h1>", unsafe_allow_html=True)
         st.markdown("<h3 style='text-align: center;'>Cosa vuole fare oggi?</h3>", unsafe_allow_html=True)
         st.write("---")
@@ -57,7 +57,7 @@ if check_password():
                 st.rerun()
 
     # --- REGISTRAZIONE ---
-    elif st.session_state["pagina"] == "registro":
+    elif st.session_state.get("pagina") == "registro":
         if st.button("⬅️ Torna al Menu"):
             st.session_state["num_figli"] = 1
             st.session_state["pagina"] = "menu"
@@ -165,7 +165,7 @@ if check_password():
             st.error(f"Errore: {e}")
 
     # --- VISUALIZZAZIONE ---
-elif st.session_state["pagina"] == "visualizza":
+elif st.session_state.get("pagina") == "visualizza":
     if st.button("⬅️ Torna al Menu"):
         st.session_state["pagina"] = "menu"
         st.rerun()
