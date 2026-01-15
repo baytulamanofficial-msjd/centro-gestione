@@ -22,6 +22,7 @@ def check_password():
         with col2:
             u = st.text_input("User:")
             p = st.text_input("Password:", type="password")
+            ricordami = st.checkbox("Ricordami")
             if st.button("Accedi"):
                 if u == st.secrets["credentials"]["user"] and p == st.secrets["credentials"]["password"]:
                     st.session_state["password_correct"] = True
