@@ -68,25 +68,28 @@ if check_password():
             lista_mesi = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", 
                           "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"]
 
-            # 1. Nomi Alunni (Dinamico con tasto +)
-            with st.container():
-                nomi_alunni = []
-                col_nome, col_piu = st.columns([0.9, 0.1])
-                with col_nome:
-                    nomi_alunni.append(st.text_input("Nome Alunno 1", key="alunno_1"))
-                with col_piu:
-                    st.write(" ")
-                    st.write(" ")
-                    if st.button("➕"):
-                        if st.session_state["num_figli"] < 7:
-                            st.session_state["num_figli"] += 1
-                            st.rerun()
-                
-                for i in range(2, st.session_state["num_figli"] + 1):
-                    nomi_alunni.append(st.text_input(f"Nome Alunno {i}", key=f"alunno_{i}"))
+            # 1. Nomi Alunni
+            nomi_alunni = []
+            col_nome, col_piu = st.columns([0.9, 0.1])
+            with col_nome:
+                nomi_alunni.append(st.text_input("Nome Alunno 1", key="alunno_1"))
+            with col_piu:
+                st.write(" ")
+                st.write(" ")
+                if st.button("➕"):
+                    if st.session_state["num_figli"] < 7:
+                        st.session_state["num_figli"] += 1
+                        st.rerun()
+            
+            for i in range(2, st.session_state["num_figli"] + 1):
+                nomi_alunni.append(st.text_input(f"Nome Alunno {i}", key=f"alunno_{i}"))
 
-            # 2. Form Dati
-            with st.form("modulo_finale"):
+            st.write("---")
+            
+            # --- SELEZIONE MODALITÀ (Fuori dal form per reattività immediata) ---
+            tipo_pagamento = st.radio("Seleziona modalità pagamento:", ["Un mese", "Più mesi"], horizontal=True)
+
+            with st.form("modulo_dati_fissi"):
                 nome_genitore = st.text_input("Nome Genitore")
                 col_tel, col_mail = st.columns(2)
                 with col_tel:
@@ -94,20 +97,17 @@ if check_password():
                 with col_mail:
                     email = st.text_input("Email")
                 
-                st.write("---")
-                tipo_pagamento = st.radio("Seleziona modalità pagamento:", ["Un mese", "Più mesi"], horizontal=True)
-                
-                # --- QUESTA È LA PARTE CHE HO SISTEMATO PER TE ---
-                mese_da, mese_a, mese_selezione = "", "", ""
+                # --- LOGICA DA / A ---
+                mese_da, mese_a, mese_singolo = "", "", ""
                 if tipo_pagamento == "Un mese":
-                    mese_selezione = st.selectbox("Seleziona il mese:", [""] + lista_mesi)
+                    mese_singolo = st.selectbox("Seleziona il mese:", [""] + lista_mesi)
                 else:
+                    st.write("Seleziona l'intervallo di mesi:")
                     col_m1, col_m2 = st.columns(2)
                     with col_m1:
-                        mese_da = st.selectbox("Da:", [""] + lista_mesi)
+                        mese_da = st.selectbox("Da mese:", [""] + lista_mesi)
                     with col_m2:
-                        mese_a = st.selectbox("A:", [""] + lista_mesi)
-                # ------------------------------------------------
+                        mese_a = st.selectbox("Al mese:", [""] + lista_mesi)
 
                 col_imp, col_data = st.columns(2)
                 with col_imp:
@@ -125,25 +125,25 @@ if check_password():
                     if not nome_genitore: errori.append("Nome Genitore")
                     if not email: errori.append("Email")
                     if importo <= 0: errori.append("Importo")
-                    if tipo_pagamento == "Un mese" and not mese_selezione: errori.append("Mese")
+                    
+                    if tipo_pagamento == "Un mese" and not mese_singolo: errori.append("Mese")
                     if tipo_pagamento == "Più mesi" and (not mese_da or not mese_a): errori.append("Mesi (Da/A)")
 
                     if errori:
-                        st.error(f"⚠️ Compila: {', '.join(errori)}")
+                        st.error(f"⚠️ Campi mancanti: {', '.join(errori)}")
                     else:
-                        # Controllo duplicati e Salvataggio
                         nomi_esistenti = [n.strip().lower() for n in sheet.col_values(2)]
                         prossimo_id = len([x for x in sheet.col_values(1) if x])
                         registrati = 0
                         
-                        testo_mese = mese_selezione if tipo_pagamento == "Un mese" else f"{mese_da}-{mese_a}"
+                        mese_testo = mese_singolo if tipo_pagamento == "Un mese" else f"Da {mese_da} a {mese_a}"
                         
                         for nome in nomi_alunni:
                             if nome and nome.strip():
                                 if nome.strip().lower() in nomi_esistenti:
-                                    st.warning(f"'{nome}' esiste già. Salto.")
+                                    st.warning(f"'{nome}' è già registrato.")
                                 else:
-                                    riga = [prossimo_id + registrati, nome, nome_genitore, telefono, email, importo, str(data_pagamento), responsabile, testo_mese]
+                                    riga = [prossimo_id + registrati, nome, nome_genitore, telefono, email, importo, str(data_pagamento), responsabile, mese_testo]
                                     sheet.append_row(riga)
                                     registrati += 1
                         
@@ -164,7 +164,8 @@ if check_password():
         st.title("Database")
         try:
             sheet = get_sheet()
-            df = pd.DataFrame(sheet.get_all_records()) 
+            data = sheet.get_all_values()
+            df = pd.DataFrame(data[1:], columns=data[0]) 
             st.dataframe(df, use_container_width=True)
         except:
             st.error("Errore database")
