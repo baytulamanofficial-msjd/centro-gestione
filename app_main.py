@@ -22,7 +22,6 @@ def check_password():
         with col2:
             u = st.text_input("User:")
             p = st.text_input("Password:", type="password")
-            ricordami = st.checkbox("Ricordami")
             if st.button("Accedi"):
                 if u == st.secrets["credentials"]["user"] and p == st.secrets["credentials"]["password"]:
                     st.session_state["password_correct"] = True
@@ -58,12 +57,14 @@ if check_password():
             st.session_state["pagina"] = "menu"
             st.rerun()
         st.title("Nuova Registrazione")
+        
         try:
             sheet = get_sheet()
-            
-            # Lista dei mesi per le caselle di selezione
             lista_mesi = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", 
                           "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"]
+
+            # Per far apparire le caselle subito, mettiamo la scelta della modalità fuori o usiamo una colonna
+            tipo_pagamento = st.radio("Seleziona modalità pagamento:", ["Un mese", "Più mesi"], horizontal=True)
 
             with st.form("modulo_dati"):
                 nome_alunno = st.text_input("Nome Alunno")
@@ -71,33 +72,29 @@ if check_password():
                 telefono = st.text_input("Telefono")
                 email = st.text_input("Email")
                 
-                st.write("---")
-                # Nuova funzione: Scelta tra uno o più mesi
-                tipo_pagamento = st.radio("Seleziona modalità pagamento:", ["Un mese", "Più mesi"], horizontal=True)
-                
+                # Qui mostriamo le caselle in base alla scelta fatta sopra
                 if tipo_pagamento == "Un mese":
-                    mese_singolo = st.selectbox("Seleziona il mese:", lista_mesi)
+                    st.selectbox("Seleziona il mese:", lista_mesi, key="mese_singolo")
                 else:
                     col_m1, col_m2 = st.columns(2)
                     with col_m1:
-                        mese_da = st.selectbox("Da:", lista_mesi)
+                        st.selectbox("Da:", lista_mesi, key="mese_da")
                     with col_m2:
-                        mese_a = st.selectbox("A:", lista_mesi)
+                        st.selectbox("A:", lista_mesi, key="mese_a")
                 
                 submit = st.form_submit_button("Salva")
                 
                 if submit:
-                    # Calcola riga basandosi sulla colonna B (nomi) per evitare righe vuote
                     prossimo_numero = len([x for x in sheet.col_values(2) if x]) 
                     nuova_riga = [prossimo_numero, nome_alunno, nome_genitore, telefono, email]
                     sheet.append_row(nuova_riga, table_prefix='USER_ENTERED')
-                    st.success("Dati salvati con successo!")
+                    st.success(f"Dati di {nome_alunno} registrati correttamente!")
                     st.balloons()
                     
         except Exception as e:
             st.error(f"Errore: {e}")
 
-    # --- VISUALIZZAZIONE CORRETTA ---
+    # --- VISUALIZZAZIONE ---
     elif st.session_state["pagina"] == "visualizza":
         if st.button("⬅️ Torna al Menu"):
             st.session_state["pagina"] = "menu"
@@ -110,4 +107,3 @@ if check_password():
             st.dataframe(df, use_container_width=True)
         except Exception as e:
             st.error(f"Errore caricamento: {e}")
-            st.info("Assicurati che la riga 2 del foglio contenga i nomi delle colonne.")
