@@ -287,72 +287,72 @@ if check_password():
                         st.error(f"⚠️ Campi mancanti: {', '.join(errori)}")
                     else:
                     # --- Preparazione variabili ---
-			            nomi_col = sheet.col_values(2)
-			            id_col = sheet.col_values(1)
-			            mesi_col = sheet.col_values(9)  # colonna dei mesi pagati
-			            prossimo_id = len([x for x in id_col if x])  # calcolo nuovo ID solo se serve
+                        nomi_col = sheet.col_values(2)
+                        id_col = sheet.col_values(1)
+                        mesi_col = sheet.col_values(9)  # colonna dei mesi pagati
+                        prossimo_id = len([x for x in id_col if x])  # calcolo nuovo ID solo se serve
 
-			            mese_testo = mese_singolo if tipo_pagamento == "Un mese" else f"Da {mese_da} a {mese_a}"
-			            registrati = 0
+                        mese_testo = mese_singolo if tipo_pagamento == "Un mese" else f"Da {mese_da} a {mese_a}"
+                        registrati = 0
 
-			            for nome in nomi_alunni:
-				            if not nome or not nome.strip():
-					            continue
+                        for nome in nomi_alunni:
+                        if not nome or not nome.strip():
+                            continue
 
-				            nome_norm = nome.strip().lower()
+                            nome_norm = nome.strip().lower()
 
-				            # 🔎 Cerco se l'alunno esiste già
-				            id_esistente = None
-			            	idx_riga_esistente = None
-				            for idx, nome_db in enumerate(nomi_col[2:], start=2):  # saltando intestazioni
-					            if nome_db.strip().lower() == nome_norm:
-						            id_esistente = id_col[idx]
-						            idx_riga_esistente = idx
-						            break
+                            # 🔎 Cerco se l'alunno esiste già
+                            id_esistente = None
+                        	idx_riga_esistente = None
+                            for idx, nome_db in enumerate(nomi_col[2:], start=2):  # saltando intestazioni
+                                if nome_db.strip().lower() == nome_norm:
+                                    id_esistente = id_col[idx]
+                                    idx_riga_esistente = idx
+                                    break
 
-				            # --- Caso: alunno già esiste ---
-				            if id_esistente:
-					            # Recupero mesi già pagati
-					            mesi_attuali = mesi_col[idx_riga_esistente] if len(mesi_col) > idx_riga_esistente else ""
-					            if tipo_pagamento == "Un mese":
-						            nuovi_mesi = mese_testo
-					            else:
-						            if mesi_attuali:
-							            nuovi_mesi = f"{mesi_attuali}, {mese_testo}"
-						            else:
-							            nuovi_mesi = mese_testo
+                            # --- Caso: alunno già esiste ---
+                            if id_esistente:
+                                # Recupero mesi già pagati
+                                mesi_attuali = mesi_col[idx_riga_esistente] if len(mesi_col) > idx_riga_esistente else ""
+                                if tipo_pagamento == "Un mese":
+                                    nuovi_mesi = mese_testo
+                                else:
+                                    if mesi_attuali:
+                                        nuovi_mesi = f"{mesi_attuali}, {mese_testo}"
+                                    else:
+                                        nuovi_mesi = mese_testo
 
-					            # Aggiorno riga esistente
-					            riga = [
-						            id_esistente,
-						            nome,
-						            nome_genitore,
-						            telefono,
-						            email,
+                                # Aggiorno riga esistente
+                                riga = [
+                                    id_esistente,
+                                    nome,
+                                    nome_genitore,
+                                    telefono,
+                                    email,
                                     importo,
-						            str(data_pagamento),
-						            responsabile,
-						            nuovi_mesi
-					            ]
-					            sheet.append_row(riga)
-					            registrati += 1
+                                    str(data_pagamento),
+                                    responsabile,
+                                    nuovi_mesi
+                                ]
+                                sheet.append_row(riga)
+                                registrati += 1
 
-				            # --- Caso: alunno nuovo ---
-				            else:
-					            id_alunno = prossimo_id + registrati
-					            riga = [
-						            id_alunno,
-						            nome,
-						            nome_genitore,
-						            telefono,
-						            email,
-						            importo,
-						            str(data_pagamento),
-						            responsabile,
-						            mese_testo
-					            ]
-					                sheet.append_row(riga)
-					                registrati += 1
+                            # --- Caso: alunno nuovo ---
+                            else:
+                                id_alunno = prossimo_id + registrati
+                                riga = [
+                                    id_alunno,
+                                    nome,
+                                    nome_genitore,
+                                    telefono,
+                                    email,
+                                    importo,
+                                    str(data_pagamento),
+                                    responsabile,
+                                    mese_testo
+                                ]
+                                sheet.append_row(riga)
+                                registrati += 1
 
                         if registrati > 0:
                             st.success("Salvato con successo!")
