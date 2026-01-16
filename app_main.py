@@ -161,13 +161,6 @@ if check_password():
             # --- Array nomi alunni ---
             nomi_alunni = [st.session_state["alunno_1_select"] if st.session_state["alunno_1_select"] else ""]
 
-            # --- Aggiorna session_state per autocompletamento prima di creare gli altri selectbox ---
-            if selezione_alunno:
-                dati = dati_alunni.get(selezione_alunno, {})
-                st.session_state["genitore_select"] = dati.get("Nome Genitore", "")
-                st.session_state["telefono_select"] = dati.get("Telefono", "")
-                st.session_state["email_select"] = dati.get("Email", "")
-
             # --- Altri alunni (dal 2 in poi) ---
             for i in range(2, st.session_state["num_figli"] + 1):
                 nomi_alunni.append(st.text_input(f"Nome Alunno {i}", key=f"alunno_{i}"))
@@ -208,11 +201,15 @@ if check_password():
                             st.session_state["email_select"] = d.get("Email", "")
                             break
 
-            # Trigger autocompletamento
-            if selezione_alunno: aggiorna_session_state(alunno=selezione_alunno)
-            elif selezione_genitore: aggiorna_session_state(genitore=selezione_genitore)
-            elif selezione_email: aggiorna_session_state(email=selezione_email)
-            elif selezione_telefono: aggiorna_session_state(telefono=selezione_telefono)
+           # Trigger autocompletamento corretto
+            if selezione_alunno:
+                aggiorna_session_state(alunno=selezione_alunno)
+            elif st.session_state.get("genitore_select"):
+                aggiorna_session_state(genitore=st.session_state["genitore_select"])
+            elif st.session_state.get("email_select"):
+                aggiorna_session_state(email=st.session_state["email_select"])
+            elif st.session_state.get("telefono_select"):
+                aggiorna_session_state(telefono=st.session_state["telefono_select"])
 
             # --- Aggiungi al tuo array nomi_alunni per gestione num_figli ---
             nomi_alunni = [st.session_state["alunno_1_select"] if st.session_state["alunno_1_select"] else ""]
