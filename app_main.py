@@ -122,13 +122,13 @@ if check_password():
                 dati = dati_alunni.get(selezione_alunno, {})
 
                 if st.session_state.get("genitore_select") != dati.get("Nome Genitore", ""):
-                st.session_state["genitore_select"] = dati.get("Nome Genitore", "")
+                	st.session_state["genitore_select"] = dati.get("Nome Genitore", "")
 
                 if st.session_state.get("telefono_select") != dati.get("Telefono", ""):
-                st.session_state["telefono_select"] = dati.get("Telefono", "")
+                	st.session_state["telefono_select"] = dati.get("Telefono", "")
 
                 if st.session_state.get("email_select") != dati.get("Email", ""):
-                st.session_state["email_select"] = dati.get("Email", "")
+                	st.session_state["email_select"] = dati.get("Email", "")
 
             # --- Altri alunni ---
             for i in range(2, st.session_state["num_figli"] + 1):
