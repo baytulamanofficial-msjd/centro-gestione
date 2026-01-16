@@ -88,7 +88,7 @@ if check_password():
                     }
                 lista_alunni = list(dati_alunni.keys())
 
-                        # --- Nomi Alunni con menu a tendina ---
+            # --- Nomi Alunni con menu a tendina ---
             # Inizializza session_state se non esistono
             if "alunno_1_select" not in st.session_state:
                 st.session_state["alunno_1_select"] = ""
@@ -220,28 +220,23 @@ if check_password():
             # --- Aggiungi al tuo array nomi_alunni per gestione num_figli ---
             nomi_alunni = [st.session_state["alunno_1_select"] if st.session_state["alunno_1_select"] else ""]
 
-                       # --- Filtra mesi non pagati per l'alunno selezionato ---
-            mesi_non_pagati = lista_mesi.copy()  # partiamo da tutti i mesi
+            # --- Filtra mesi NON pagati (nuova logica a colonne) ---
+            mesi_non_pagati = lista_mesi.copy()
+
             if selezione_alunno:
-                try:
-                    col_mesi = sheet.col_values(9)  # colonna dove sono salvati i mesi (9 = colonna I)
-                    col_nomi = sheet.col_values(2)  # colonna Nome Alunno
-                    for nome, mese in zip(col_nomi[2:], col_mesi[2:]):  # saltando intestazioni
-                        if nome.strip().lower() == selezione_alunno.strip().lower():
-                            # rimuovo i mesi già pagati
-                            if "Da " in mese or "a " in mese:
-                                # caso "Da X a Y"
-                                partenza, fine = mese.replace("Da ","").split(" a ")
-                                idx_partenza = lista_mesi.index(partenza)
-                                idx_fine = lista_mesi.index(fine)
-                                for i in range(idx_partenza, idx_fine+1):
-                                    if lista_mesi[i] in mesi_non_pagati:
-                                        mesi_non_pagati.remove(lista_mesi[i])
-                            else:
+                headers = sheet.row_values(2)
+                nomi_col = sheet.col_values(2)
+
+                for idx, nome_db in enumerate(nomi_col[2:], start=3):
+                    if nome_db.strip().lower() == selezione_alunno.strip().lower():
+                        riga = sheet.row_values(idx)
+
+                        for mese in lista_mesi:
+                            col_idx = headers.index(mese)
+                            if col_idx < len(riga) and riga[col_idx].strip():
                                 if mese in mesi_non_pagati:
                                     mesi_non_pagati.remove(mese)
-                except Exception as e:
-                    st.error(f"Errore nel filtrare mesi: {e}")
+                        break
 
             # --- Modalità pagamento (reattiva) ---
             tipo_pagamento = st.radio(
@@ -335,17 +330,58 @@ if check_password():
                             # --- Caso: alunno già esiste ---
                             if idx_riga_esistente:
                                 for mese, col_idx in zip(mesi_da_scrivere, colonne_mesi_idx):
+
                                     sheet.update_cell(
                                         idx_riga_esistente,
                                         col_idx,
                                         f"{importo} | {data_pagamento} | {responsabile}"
                                     )
-                                    # applico colore
+
                                     sheet.format(
                                         gspread.utils.rowcol_to_a1(idx_riga_esistente, col_idx),
-                                        {"backgroundColorStyle": {"rgbColor": gspread.utils.hex_to_rgb(colore)}}
+                                        {
+                                            "backgroundColor": {
+                                                "red": int(colore[1:3], 16) / 255,
+                                                "green": int(colore[3:5], 16) / 255,
+                                                "blue": int(colore[5:7], 16) / 255
+                                            }
+                                        }
                                     )
-                                registrati += 1
+
+                                # ===== 1️⃣ CONTO I PAGAMENTI GIÀ ESISTENTI =====
+                                riga_attuale = sheet.row_values(idx_riga_esistente)
+                                pagamenti_esistenti = 0
+
+                                for mese in lista_mesi:
+                                    col_idx_mese = headers.index(mese) + 1   # +1 perché gspread parte da 1
+                                    if col_idx_mese <= len(riga_attuale) and riga_attuale[col_idx_mese - 1].strip():
+                                        pagamenti_esistenti += 1
+
+                                # alterno colore
+                                colore = COLOR1 if pagamenti_esistenti % 2 == 0 else COLOR2
+
+                                # ===== 2️⃣ SCRIVO I NUOVI PAGAMENTI =====
+                                for mese, col_idx in zip(mesi_da_scrivere, colonne_mesi_idx):
+
+                                    sheet.update_cell(
+                                        idx_riga_esistente,
+                                        col_idx,
+                                        f"{importo} | {data_pagamento} | {responsabile}"
+                                    )
+
+                                    # ===== 3️⃣ APPLICO COLORE (CORRETTO) =====
+                                    sheet.format(
+                                        gspread.utils.rowcol_to_a1(idx_riga_esistente, col_idx),
+                                        {
+                                            "backgroundColor": {
+                                                "red": int(colore[1:3], 16) / 255,
+                                                "green": int(colore[3:5], 16) / 255,
+                                                "blue": int(colore[5:7], 16) / 255
+                                            }
+                                        }
+                                    )
+
+                                    registrati += 1
 
                             # --- Caso: alunno nuovo ---
                             else:
