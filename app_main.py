@@ -329,7 +329,20 @@ if check_password():
 
                             # --- Caso: alunno già esiste ---
                             if idx_riga_esistente:
-                                for mese, col_idx in zip(mesi_da_scrivere, colonne_mesi_idx):
+
+                                # ===== 1️⃣ CONTO I PAGAMENTI GIÀ ESISTENTI =====
+                                riga_attuale = sheet.row_values(idx_riga_esistente)
+                                pagamenti_esistenti = 0
+
+                                for col_idx in colonne_mesi_idx:
+                                    if col_idx <= len(riga_attuale) and riga_attuale[col_idx - 1].strip():
+                                        pagamenti_esistenti += 1
+
+                                # ===== 2️⃣ SCELGO COLORE =====
+                                colore = COLOR1 if pagamenti_esistenti % 2 == 0 else COLOR2
+
+                                # ===== 3️⃣ SCRIVO PAGAMENTO + COLORE =====
+                                for col_idx in colonne_mesi_idx:
 
                                     sheet.update_cell(
                                         idx_riga_esistente,
@@ -347,18 +360,6 @@ if check_password():
                                             }
                                         }
                                     )
-
-                                # ===== 1️⃣ CONTO I PAGAMENTI GIÀ ESISTENTI =====
-                                riga_attuale = sheet.row_values(idx_riga_esistente)
-                                pagamenti_esistenti = 0
-
-                                for mese in lista_mesi:
-                                    col_idx_mese = headers.index(mese) + 1   # +1 perché gspread parte da 1
-                                    if col_idx_mese <= len(riga_attuale) and riga_attuale[col_idx_mese - 1].strip():
-                                        pagamenti_esistenti += 1
-
-                                # alterno colore
-                                colore = COLOR1 if pagamenti_esistenti % 2 == 0 else COLOR2
 
                                 # ===== 2️⃣ SCRIVO I NUOVI PAGAMENTI =====
                                 for mese, col_idx in zip(mesi_da_scrivere, colonne_mesi_idx):
