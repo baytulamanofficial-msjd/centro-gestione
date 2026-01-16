@@ -286,63 +286,63 @@ if check_password():
                     if errori:
                         st.error(f"⚠️ Campi mancanti: {', '.join(errori)}")
                     else:
-						# --- Preparazione colonne e ID ---
-						nomi_col = sheet.col_values(2)  # colonna Nome Alunno
-						id_col = sheet.col_values(1)    # colonna ID
-						headers = sheet.row_values(2)   # intestazioni (da usare per trovare indice mese)
-						prossimo_id = len([x for x in id_col if x])  # nuovo ID solo se serve
-						registrati = 0
+                        # --- Preparazione colonne e ID ---
+                        nomi_col = sheet.col_values(2)  # colonna Nome Alunno
+                        id_col = sheet.col_values(1)    # colonna ID
+                        headers = sheet.row_values(2)   # intestazioni (da usare per trovare indice mese)
+                        prossimo_id = len([x for x in id_col if x])  # nuovo ID solo se serve
+                        registrati = 0
 
-						# --- Determino mesi da aggiornare ---
-						if tipo_pagamento == "Un mese":
-							mesi_da_scrivere = [mese_singolo]
-						else:
-							idx_da = lista_mesi.index(mese_da)
-							idx_a = lista_mesi.index(mese_a)
-							mesi_da_scrivere = lista_mesi[idx_da:idx_a + 1]
+                        # --- Determino mesi da aggiornare ---
+                        if tipo_pagamento == "Un mese":
+                            mesi_da_scrivere = [mese_singolo]
+                        else:
+                            idx_da = lista_mesi.index(mese_da)
+                            idx_a = lista_mesi.index(mese_a)
+                            mesi_da_scrivere = lista_mesi[idx_da:idx_a + 1]
 
-						for nome in nomi_alunni:
-							if not nome or not nome.strip():
-								continue
+                        for nome in nomi_alunni:
+                            if not nome or not nome.strip():
+                                continue
 
-							nome_norm = nome.strip().lower()
+                            nome_norm = nome.strip().lower()
 
-							# 🔎 Cerco se l'alunno esiste già
-							idx_riga_esistente = None
-							for idx, nome_db in enumerate(nomi_col[2:], start=3):  # saltando prime 2 righe
-								if nome_db.strip().lower() == nome_norm:
-									idx_riga_esistente = idx
-									break
+                            # 🔎 Cerco se l'alunno esiste già
+                            idx_riga_esistente = None
+                            for idx, nome_db in enumerate(nomi_col[2:], start=3):  # saltando prime 2 righe
+                                if nome_db.strip().lower() == nome_norm:
+                                    idx_riga_esistente = idx
+                                    break
 
-							# --- Caso: alunno già esiste ---
-							if idx_riga_esistente:
-								for mese in mesi_da_scrivere:
-									col_idx = headers.index(mese) + 1  # indice colonna reale su Google Sheet
-									sheet.update_cell(
-										idx_riga_esistente,
-										col_idx,
-										f"{importo} | {data_pagamento} | {responsabile}"
-									)
-								registrati += 1
+                            # --- Caso: alunno già esiste ---
+                            if idx_riga_esistente:
+                                for mese in mesi_da_scrivere:
+                                    col_idx = headers.index(mese) + 1  # indice colonna reale su Google Sheet
+                                    sheet.update_cell(
+                                        idx_riga_esistente,
+                                        col_idx,
+                                        f"{importo} | {data_pagamento} | {responsabile}"
+                                    )
+                                registrati += 1
 
-							# --- Caso: alunno nuovo ---
-							else:
-								id_alunno = prossimo_id + registrati + 1
-								# costruisco riga vuota con tante colonne quante le intestazioni
-								riga_nuova = [""] * len(headers)
-								riga_nuova[0] = id_alunno
-								riga_nuova[1] = nome
-								riga_nuova[2] = nome_genitore
-								riga_nuova[3] = telefono
-								riga_nuova[4] = email
+                            # --- Caso: alunno nuovo ---
+                            else:
+                                id_alunno = prossimo_id + registrati + 1
+                                # costruisco riga vuota con tante colonne quante le intestazioni
+                                riga_nuova = [""] * len(headers)
+                                riga_nuova[0] = id_alunno
+                                riga_nuova[1] = nome
+                                riga_nuova[2] = nome_genitore
+                                riga_nuova[3] = telefono
+                                riga_nuova[4] = email
 
-								# aggiorno colonne dei mesi con pagamento
-								for mese in mesi_da_scrivere:
-									col_idx = headers.index(mese)
-									riga_nuova[col_idx] = f"{importo} | {data_pagamento} | {responsabile}"
+                                # aggiorno colonne dei mesi con pagamento
+                                for mese in mesi_da_scrivere:
+                                    col_idx = headers.index(mese)
+                                    riga_nuova[col_idx] = f"{importo} | {data_pagamento} | {responsabile}"
 
-								sheet.append_row(riga_nuova)
-								registrati += 1
+                                sheet.append_row(riga_nuova)
+                                registrati += 1
 
                         if registrati > 0:
                             st.success("Salvato con successo!")
