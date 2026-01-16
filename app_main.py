@@ -296,8 +296,8 @@ if check_password():
                         registrati = 0
 
                         for nome in nomi_alunni:
-                        if not nome or not nome.strip():
-                            continue
+                            if not nome or not nome.strip():
+                                continue
 
                             nome_norm = nome.strip().lower()
 
