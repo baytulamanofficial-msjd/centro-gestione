@@ -344,19 +344,19 @@ if check_password():
                                 # ===== 3️⃣ SCRIVO PAGAMENTO + COLORE =====
                                 for col_idx in colonne_mesi_idx:
 
+                                    # aggiorno cella con pagamento
                                     sheet.update_cell(
                                         idx_riga_esistente,
                                         col_idx,
                                         f"{importo} | {data_pagamento} | {responsabile}"
                                     )
 
+                                    # applico colore senza usare effectiveFormat
                                     sheet.format(
                                         gspread.utils.rowcol_to_a1(idx_riga_esistente, col_idx),
                                         {
-                                            "backgroundColor": {
-                                                "red": int(colore[1:3], 16) / 255,
-                                                "green": int(colore[3:5], 16) / 255,
-                                                "blue": int(colore[5:7], 16) / 255
+                                            "backgroundColorStyle": {
+                                                "rgbColor": gspread.utils.hex_to_rgb(colore)
                                             }
                                         }
                                     )
