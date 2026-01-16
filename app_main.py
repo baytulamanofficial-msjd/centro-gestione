@@ -289,43 +289,43 @@ if check_password():
                         nomi_col = sheet.col_values(2)
                         id_col = sheet.col_values(1)
 
-			            mese_testo = mese_singolo if tipo_pagamento == "Un mese" else f"Da {mese_da} a {mese_a}"
-			            registrati = 0
+                        mese_testo = mese_singolo if tipo_pagamento == "Un mese" else f"Da {mese_da} a {mese_a}"
+                        registrati = 0
 
-			            for nome in nomi_alunni:
-				            if not nome or not nome.strip():
-					            continue
+                        for nome in nomi_alunni:
+                            if not nome or not nome.strip():
+                                continue
 
-				            nome_norm = nome.strip().lower()
+                            nome_norm = nome.strip().lower()
 
-				            # 🔎 Cerco se l'alunno esiste già
-				            id_esistente = None
-				            for idx, nome_db in enumerate(nomi_col[2:], start=2):
-					            if nome_db.strip().lower() == nome_norm:
-						            id_esistente = id_col[idx]
-						            break
+                            # 🔎 Cerco se l'alunno esiste già
+                            id_esistente = None
+                            for idx, nome_db in enumerate(nomi_col[2:], start=2):
+                                if nome_db.strip().lower() == nome_norm:
+                                    id_esistente = id_col[idx]
+                                    break
 
-				            # ➕ Se NON esiste → nuovo ID
-				            if id_esistente is None:
-					            id_alunno = len([x for x in id_col if x])
-				            else:
-					            id_alunno = id_esistente
+                            # ➕ Se NON esiste → nuovo ID
+                            if id_esistente is None:
+                                id_alunno = len([x for x in id_col if x])
+                            else:
+                                id_alunno = id_esistente
 
-				            # ✅ SALVO SEMPRE il pagamento
-				            riga = [
-					            id_alunno,
-					            nome,
-					            nome_genitore,
-					            telefono,
-					            email,
-					            importo,
-					            str(data_pagamento),
-					            responsabile,
-					            mese_testo
-				            ]
+                            # ✅ SALVO SEMPRE il pagamento
+                            riga = [
+                                id_alunno,
+                                nome,
+                                nome_genitore,
+                                telefono,
+                                email,
+                                importo,
+                                str(data_pagamento),
+                                responsabile,
+                                mese_testo
+                            ]
 
-				            sheet.append_row(riga)
-				            registrati += 1
+                            sheet.append_row(riga)
+                            registrati += 1
 							
                         if registrati > 0:
                             st.success("Salvato con successo!")
