@@ -287,7 +287,7 @@ if check_password():
                         st.error(f"⚠️ Campi mancanti: {', '.join(errori)}")
                     else:
                         nomi_col = sheet.col_values(2)
-			            id_col = sheet.col_values(1)
+			            	id_col = sheet.col_values(1)
 
 			            mese_testo = mese_singolo if tipo_pagamento == "Un mese" else f"Da {mese_da} a {mese_a}"
 			            registrati = 0
