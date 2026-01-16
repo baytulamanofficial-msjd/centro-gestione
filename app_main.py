@@ -345,7 +345,7 @@ if check_password():
                                         gspread.utils.rowcol_to_a1(idx_riga_esistente, col_idx),
                                         {"backgroundColorStyle": {"rgbColor": gspread.utils.hex_to_rgb(colore)}}
                                     )
-                            registrati += 1
+                                registrati += 1
 
                             # --- Caso: alunno nuovo ---
                             else:
