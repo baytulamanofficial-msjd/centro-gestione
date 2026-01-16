@@ -303,7 +303,7 @@ if check_password():
 
                             # 🔎 Cerco se l'alunno esiste già
                             id_esistente = None
-                        	idx_riga_esistente = None
+                            idx_riga_esistente = None
                             for idx, nome_db in enumerate(nomi_col[2:], start=2):  # saltando intestazioni
                                 if nome_db.strip().lower() == nome_norm:
                                     id_esistente = id_col[idx]
