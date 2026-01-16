@@ -293,6 +293,10 @@ if check_password():
                         prossimo_id = len([x for x in id_col if x])  # nuovo ID solo se serve
                         registrati = 0
 
+                        # --- Definizione colori ---
+                        COLOR1 = "FF94DCF8"
+                        COLOR2 = "FFF7C7AC"
+
                         # --- Determino mesi da aggiornare ---
                         if tipo_pagamento == "Un mese":
                             mesi_da_scrivere = [mese_singolo]
@@ -314,21 +318,38 @@ if check_password():
                                     idx_riga_esistente = idx
                                     break
 
+                            # Determino il colore da usare in base all'ultimo pagamento
+                            def prossimo_colore(alunno_riga, colonne_mesi):
+                                ultimo_colore = None
+                                for col_idx in colonne_mesi:
+                                    bg = sheet.get(f"{gspread.utils.rowcol_to_a1(alunno_riga, col_idx)}").effectiveFormat.backgroundColor
+                                    if bg:
+                                        ultimo_colore = bg
+                                return COLOR2 if ultimo_colore == COLOR1 else COLOR1
+
+                            # --- Mesi da aggiornare (indici su Google Sheet)
+                            colonne_mesi_idx = [headers.index(mese) + 1 for mese in mesi_da_scrivere]  # +1 perché col_values parte da 1
+
+                            colore = prossimo_colore(idx_riga_esistente or (prossimo_id + registrati + 1), colonne_mesi_idx)
+
                             # --- Caso: alunno già esiste ---
                             if idx_riga_esistente:
-                                for mese in mesi_da_scrivere:
-                                    col_idx = headers.index(mese) + 1  # indice colonna reale su Google Sheet
+                                for mese, col_idx in zip(mesi_da_scrivere, colonne_mesi_idx):
                                     sheet.update_cell(
                                         idx_riga_esistente,
                                         col_idx,
                                         f"{importo} | {data_pagamento} | {responsabile}"
                                     )
-                                registrati += 1
+                                    # applico colore
+                                    sheet.format(
+                                        gspread.utils.rowcol_to_a1(idx_riga_esistente, col_idx),
+                                        {"backgroundColorStyle": {"rgbColor": gspread.utils.hex_to_rgb(colore)}}
+                                    )
+                            registrati += 1
 
                             # --- Caso: alunno nuovo ---
                             else:
                                 id_alunno = prossimo_id + registrati + 1
-                                # costruisco riga vuota con tante colonne quante le intestazioni
                                 riga_nuova = [""] * len(headers)
                                 riga_nuova[0] = id_alunno
                                 riga_nuova[1] = nome
@@ -336,12 +357,18 @@ if check_password():
                                 riga_nuova[3] = telefono
                                 riga_nuova[4] = email
 
-                                # aggiorno colonne dei mesi con pagamento
-                                for mese in mesi_da_scrivere:
-                                    col_idx = headers.index(mese)
+                                for mese, col_idx in zip(mesi_da_scrivere, colonne_mesi_idx):
                                     riga_nuova[col_idx] = f"{importo} | {data_pagamento} | {responsabile}"
 
                                 sheet.append_row(riga_nuova)
+
+                                # applico colore ai mesi appena scritti
+                                nuova_riga_idx = len(sheet.get_all_values())  # ultima riga
+                                for col_idx in colonne_mesi_idx:
+                                    sheet.format(
+                                        gspread.utils.rowcol_to_a1(nuova_riga_idx, col_idx),
+                                        {"backgroundColorStyle": {"rgbColor": gspread.utils.hex_to_rgb(colore)}}
+                                    )
                                 registrati += 1
 
                         if registrati > 0:
