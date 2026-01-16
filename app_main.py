@@ -118,8 +118,8 @@ if check_password():
                         st.rerun()
 
 			# --- Prepara valori autocompilati PRIMA dei selectbox sotto ---
-			if selezione_alunno:
-				dati = dati_alunni.get(selezione_alunno, {})
+				if selezione_alunno:
+					dati = dati_alunni.get(selezione_alunno, {})
 				if st.session_state.get("genitore_select") != dati.get("Nome Genitore", ""):
 					st.session_state["genitore_select"] = dati.get("Nome Genitore", "")
 				if st.session_state.get("telefono_select") != dati.get("Telefono", ""):
