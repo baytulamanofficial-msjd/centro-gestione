@@ -179,15 +179,6 @@ if check_password():
             lista_email = [d.get("Email") for d in dati_alunni.values() if d.get("Email")]
             lista_telefono = [d.get("Telefono") for d in dati_alunni.values() if d.get("Telefono")]
 
-            col1, col2 = st.columns(2)
-            with col1:
-                selezione_genitore = st.selectbox("Nome Genitore", [""] + lista_genitori, key="genitore_select")
-            with col2:
-                selezione_telefono = st.selectbox("Telefono", [""] + lista_telefono, key="telefono_select")
-            col3, col4 = st.columns(2)
-            with col3:
-                selezione_email = st.selectbox("Email", [""] + lista_email, key="email_select")
-
             # --- Autocompletamento bidirezionale ---
             def aggiorna_session_state(alunno=None, genitore=None, email=None, telefono=None):
                 if alunno:
