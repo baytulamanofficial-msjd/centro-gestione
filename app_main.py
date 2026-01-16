@@ -99,7 +99,7 @@ if check_password():
             if "email_select" not in st.session_state:
                 st.session_state["email_select"] = ""
 
-            # --- Nome Alunno principale con + ---
+                        # --- Nome Alunno principale ---
             nomi_alunni = []
             col_nome, col_piu = st.columns([0.9, 0.1])
             with col_nome:
@@ -108,7 +108,6 @@ if check_password():
                     [""] + lista_alunni,
                     key="alunno_1_select"
                 )
-                nomi_alunni.append(st.session_state["alunno_1_select"])
 
             with col_piu:
                 st.write(" ")
@@ -117,6 +116,50 @@ if check_password():
                     if st.session_state["num_figli"] < 7:
                         st.session_state["num_figli"] += 1
                         st.rerun()
+
+            # --- Autocompletamento SUBITO DOPO il Nome Alunno ---
+            if selezione_alunno:
+                dati = dati_alunni.get(selezione_alunno, {})
+                st.session_state["genitore_select"] = dati.get("Nome Genitore", "")
+                st.session_state["telefono_select"] = dati.get("Telefono", "")
+                st.session_state["email_select"] = dati.get("Email", "")
+
+            # --- Altri alunni ---
+            for i in range(2, st.session_state["num_figli"] + 1):
+                nomi_alunni.append(st.text_input(f"Nome Alunno {i}", key=f"alunno_{i}"))
+
+            st.write("---")
+
+            # --- Liste per menu a tendina ---
+            lista_genitori = [d["Nome Genitore"] for d in dati_alunni.values() if d.get("Nome Genitore")]
+            lista_email = [d["Email"] for d in dati_alunni.values() if d.get("Email")]
+            lista_telefono = [d["Telefono"] for d in dati_alunni.values() if d.get("Telefono")]
+
+            # --- ORA creo i selectbox (dopo aver aggiornato session_state) ---
+            col1, col2 = st.columns(2)
+            with col1:
+                nome_genitore = st.selectbox(
+                    "Nome Genitore",
+                    [""] + lista_genitori,
+                    key="genitore_select"
+                )
+            with col2:
+                telefono = st.selectbox(
+                    "Telefono",
+                    [""] + lista_telefono,
+                    key="telefono_select"
+                )
+
+            col3, col4 = st.columns(2)
+            with col3:
+                email = st.selectbox(
+                    "Email",
+                    [""] + lista_email,
+                    key="email_select"
+                )
+
+            # --- Array nomi alunni ---
+            nomi_alunni = [st.session_state["alunno_1_select"] if st.session_state["alunno_1_select"] else ""]
 
             # --- Aggiorna session_state per autocompletamento prima di creare gli altri selectbox ---
             if selezione_alunno:
