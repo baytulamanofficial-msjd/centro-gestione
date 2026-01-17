@@ -167,10 +167,6 @@ if check_password():
             # --- Array nomi alunni ---
             nomi_alunni = [st.session_state["alunno_1_select"] if st.session_state["alunno_1_select"] else ""]
 
-            # --- Altri alunni (dal 2 in poi) ---
-            for i in range(2, st.session_state["num_figli"] + 1):
-                nomi_alunni.append(st.text_input(f"Nome Alunno {i}", key=f"alunno_{i}"))
-
             st.write("---")  # separatore fuori dal for
 
             # --- Nomi Alunni / Genitori / Email / Telefono con menu a tendina ---
