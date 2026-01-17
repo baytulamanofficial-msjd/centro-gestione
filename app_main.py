@@ -319,16 +319,24 @@ if check_password():
                             # --- Caso: alunno già esiste ---
                             if idx_riga_esistente:
 
-                                # ===== 1️⃣ CONTO I PAGAMENTI GIÀ ESISTENTI =====
+                                # ===== 1️⃣ CONTO I PAGAMENTI GIÀ FATTI (PER DATA) =====
                                 riga_attuale = sheet.row_values(idx_riga_esistente)
-                                pagamenti_esistenti = 0
+                                date_pagamenti = set()
 
-                                for col_idx in colonne_mesi_idx:
-                                    if col_idx <= len(riga_attuale) and riga_attuale[col_idx - 1].strip():
-                                        pagamenti_esistenti += 1
+                                for cella in riga_attuale:
+                                    if "|" in cella:
+                                        try:
+                                            # formato: importo | data | responsabile
+                                            parti = cella.split("|")
+                                            data = parti[1].strip()
+                                            date_pagamenti.add(data)
+                                        except:
+                                            pass
 
-                                # ===== 2️⃣ SCELGO COLORE =====
-                                colore = COLOR1 if pagamenti_esistenti % 2 == 0 else COLOR2
+                                numero_pagamenti = len(date_pagamenti)
+
+                                # ===== 2️⃣ SCELGO COLORE (alternato per pagamento) =====
+                                colore = COLOR1 if numero_pagamenti % 2 == 0 else COLOR2
 
                                # ===== 3️⃣ SCRIVO PAGAMENTO + COLORE =====
                                 for col_idx in colonne_mesi_idx:
