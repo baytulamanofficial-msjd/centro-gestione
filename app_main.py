@@ -79,6 +79,11 @@ if check_password():
                 rows = data_sheet[2:]
                 df_db = pd.DataFrame(rows, columns=headers)
 
+                lista_alunni = sorted(df_db["Nome Alunno"].dropna().unique().tolist())
+                lista_genitori = sorted(df_db["Nome Genitore"].dropna().unique().tolist())
+                lista_email = sorted(df_db["Email"].dropna().unique().tolist())
+                lista_telefono = sorted(df_db["Telefono"].dropna().unique().tolist())
+
                 # Creiamo dizionario per autocompletamento
                 for _, r in df_db.iterrows():
                     dati_alunni[r["Nome Alunno"].strip()] = {
@@ -99,23 +104,28 @@ if check_password():
             if "email_select" not in st.session_state:
                 st.session_state["email_select"] = ""
 
-                        # --- Nome Alunno principale ---
-            nomi_alunni = []
+            # --- Nome Alunno principale ---
             col_nome, col_piu = st.columns([0.9, 0.1])
             with col_nome:
                 selezione_alunno = st.selectbox(
                     "Nome Alunno 1",
                     [""] + lista_alunni,
                     key="alunno_1_select"
-                )
+                    )
 
             with col_piu:
-                st.write(" ")
-                st.write(" ")
+                st.write("")
+                st.write("")
                 if st.button("➕"):
                     if st.session_state["num_figli"] < 7:
                         st.session_state["num_figli"] += 1
                         st.rerun()
+
+            # --- Altri alunni ---
+            for i in range(2, st.session_state["num_figli"] + 1):
+                st.text_input(f"Nome Alunno {i}", key=f"alunno_{i}")
+
+            st.write("---")
 
             # --- Prepara valori autocompilati PRIMA dei selectbox sotto ---
             if selezione_alunno:
@@ -129,17 +139,6 @@ if check_password():
 
                 if st.session_state.get("email_select") != dati.get("Email", ""):
                 	st.session_state["email_select"] = dati.get("Email", "")
-
-            # --- Altri alunni ---
-            for i in range(2, st.session_state["num_figli"] + 1):
-                nomi_alunni.append(st.text_input(f"Nome Alunno {i}", key=f"alunno_{i}"))
-
-            st.write("---")
-
-            # --- Liste per menu a tendina ---
-            lista_genitori = [d["Nome Genitore"] for d in dati_alunni.values() if d.get("Nome Genitore")]
-            lista_email = [d["Email"] for d in dati_alunni.values() if d.get("Email")]
-            lista_telefono = [d["Telefono"] for d in dati_alunni.values() if d.get("Telefono")]
 
             # --- ORA creo i selectbox (dopo aver aggiornato session_state) ---
             col1, col2 = st.columns(2)
@@ -164,15 +163,7 @@ if check_password():
                     key="email_select"
                 )
 
-            # --- Array nomi alunni ---
-            nomi_alunni = [st.session_state["alunno_1_select"] if st.session_state["alunno_1_select"] else ""]
-
             st.write("---")  # separatore fuori dal for
-
-            # --- Nomi Alunni / Genitori / Email / Telefono con menu a tendina ---
-            lista_genitori = [d.get("Nome Genitore") for d in dati_alunni.values() if d.get("Nome Genitore")]
-            lista_email = [d.get("Email") for d in dati_alunni.values() if d.get("Email")]
-            lista_telefono = [d.get("Telefono") for d in dati_alunni.values() if d.get("Telefono")]
 
             # --- Autocompletamento bidirezionale ---
             def aggiorna_session_state(alunno=None, genitore=None, email=None, telefono=None):
@@ -212,9 +203,6 @@ if check_password():
 			# 	aggiorna_session_state(email=st.session_state["email_select"])
 			# elif st.session_state.get("telefono_select"):
 			# 	aggiorna_session_state(telefono=st.session_state["telefono_select"])
-
-            # --- Aggiungi al tuo array nomi_alunni per gestione num_figli ---
-            nomi_alunni = [st.session_state["alunno_1_select"] if st.session_state["alunno_1_select"] else ""]
 
             # --- Filtra mesi NON pagati (nuova logica a colonne) ---
             mesi_non_pagati = lista_mesi.copy()
@@ -264,9 +252,24 @@ if check_password():
                 responsabile = st.text_input("Responsabile:", value="Sheikh Mahdy Hasan")
                 submit = st.form_submit_button("Salva Tutti")
 
+                # ===== COSTRUISCO LISTA COMPLETA ALUNNI =====
+                nomi_alunni = []
+
+                # Primo figlio (selectbox)
+                if st.session_state.get("alunno_1_select"):
+                    nomi_alunni.append(st.session_state["alunno_1_select"].strip())
+
+                # Altri figli (text_input)
+                for i in range(2, st.session_state["num_figli"] + 1):
+                    nome_extra = st.session_state.get(f"alunno_{i}", "").strip()
+                    if nome_extra:
+                        nomi_alunni.append(nome_extra)
+
                 if submit:
                     errori = []
-                    if not nomi_alunni[0]: errori.append("Nome Alunno")
+                    if not nomi_alunni:
+                        errori.append("Nome Alunno")
+
                     if not nome_genitore: errori.append("Nome Genitore")
                     if not email: errori.append("Email")
                     if importo <= 0: errori.append("Importo")
