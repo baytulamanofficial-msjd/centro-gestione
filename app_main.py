@@ -340,7 +340,7 @@ if check_password():
                                     )
 
                                     sheet.format(
-                                        gspread.utils.rowcol_to_a1(idx_riga_esistente, col_idx)
+                                        gspread.utils.rowcol_to_a1(idx_riga_esistente, col_idx),
                                         {
                                             "backgroundColor": {
                                                 "red": int(colore[1:3], 16) / 255,
