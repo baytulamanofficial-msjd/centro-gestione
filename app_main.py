@@ -340,7 +340,7 @@ if check_password():
                                     )
 
                                     sheet.format(
-                                        gspread.utils.rowcol_to_a1(nuova_riga_idx, col_idx),
+                                        gspread.utils.rowcol_to_a1(idx_riga_esistente, col_idx)
                                         {
                                             "backgroundColor": {
                                                 "red": int(colore[1:3], 16) / 255,
@@ -372,7 +372,15 @@ if check_password():
                                 for col_idx in colonne_mesi_idx:
                                     sheet.format(
                                         gspread.utils.rowcol_to_a1(nuova_riga_idx, col_idx),
+                                        {
+                                            "backgroundColor": {
+                                                "red": int(colore[1:3], 16) / 255,
+                                                "green": int(colore[3:5], 16) / 255,
+                                                "blue": int(colore[5:7], 16) / 255
+                                            }
+                                        }
                                     )
+
                                 registrati += 1
 
                         if registrati > 0:
