@@ -330,7 +330,7 @@ if check_password():
                                 # ===== 2️⃣ SCELGO COLORE =====
                                 colore = COLOR1 if pagamenti_esistenti % 2 == 0 else COLOR2
 
-                                # ===== 3️⃣ SCRIVO PAGAMENTO + COLORE =====
+                               # ===== 3️⃣ SCRIVO PAGAMENTO + COLORE =====
                                 for col_idx in colonne_mesi_idx:
 
                                     sheet.update_cell(
@@ -340,30 +340,13 @@ if check_password():
                                     )
 
                                     sheet.format(
-                                        gspread.utils.rowcol_to_a1(idx_riga_esistente, col_idx),
+                                        gspread.utils.rowcol_to_a1(nuova_riga_idx, col_idx),
                                         {
                                             "backgroundColor": {
                                                 "red": int(colore[1:3], 16) / 255,
                                                 "green": int(colore[3:5], 16) / 255,
                                                 "blue": int(colore[5:7], 16) / 255
                                             }
-                                        }
-                                    )
-
-                                # ===== 2️⃣ SCRIVO I NUOVI PAGAMENTI =====
-                                for mese, col_idx in zip(mesi_da_scrivere, colonne_mesi_idx):
-
-                                    sheet.update_cell(
-                                        idx_riga_esistente,
-                                        col_idx,
-                                        f"{importo} | {data_pagamento} | {responsabile}"
-                                    )
-
-                                    # ===== 3️⃣ APPLICO COLORE (CORRETTO) =====
-                                    sheet.format(
-                                        gspread.utils.rowcol_to_a1(idx_riga_esistente, col_idx),
-                                        {
-                                            "backgroundColor": rgb
                                         }
                                     )
 
@@ -389,7 +372,6 @@ if check_password():
                                 for col_idx in colonne_mesi_idx:
                                     sheet.format(
                                         gspread.utils.rowcol_to_a1(nuova_riga_idx, col_idx),
-                                        {"backgroundColorStyle": {"rgbColor": gspread.utils.hex_to_rgb(colore)}}
                                     )
                                 registrati += 1
 
