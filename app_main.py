@@ -313,19 +313,8 @@ if check_password():
                                     idx_riga_esistente = idx
                                     break
 
-                            # Determino il colore da usare in base all'ultimo pagamento
-                            def prossimo_colore(alunno_riga, colonne_mesi):
-                                ultimo_colore = None
-                                for col_idx in colonne_mesi:
-                                    bg = sheet.get(f"{gspread.utils.rowcol_to_a1(alunno_riga, col_idx)}").effectiveFormat.backgroundColor
-                                    if bg:
-                                        ultimo_colore = bg
-                                return COLOR2 if ultimo_colore == COLOR1 else COLOR1
-
                             # --- Mesi da aggiornare (indici su Google Sheet)
                             colonne_mesi_idx = [headers.index(mese) + 1 for mese in mesi_da_scrivere]  # +1 perché col_values parte da 1
-
-                            colore = prossimo_colore(idx_riga_esistente or (prossimo_id + registrati + 1), colonne_mesi_idx)
 
                             # --- Caso: alunno già esiste ---
                             if idx_riga_esistente:
