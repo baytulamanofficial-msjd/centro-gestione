@@ -117,6 +117,8 @@ if check_password():
                 st.write("")
                 st.write("")
                 if st.button("➕"):
+                    st.write("Numero figli:", st.session_state["num_figli"])
+
                     if st.session_state["num_figli"] < 7:
                         st.session_state["num_figli"] += 1
                         st.rerun()
@@ -136,7 +138,7 @@ if check_password():
                 dati = dati_alunni.get(selezione_alunno, {})
 
                 if st.session_state.get("genitore_select") != dati.get("Nome Genitore", ""):
-                	st.session_state["genitore_select"] = dati.get("Nome Genitore", "")
+                    st.session_state["genitore_select"] = dati.get("Nome Genitore", "")
 
                 if st.session_state.get("telefono_select") != dati.get("Telefono", ""):
                 	st.session_state["telefono_select"] = dati.get("Telefono", "")
@@ -198,15 +200,15 @@ if check_password():
                             st.session_state["email_select"] = d.get("Email", "")
                             break
 
-			# DISATTIVATO: causava modifica session_state dopo i widget
-			# if selezione_alunno:
-			# 	aggiorna_session_state(alunno=selezione_alunno)
-			# elif st.session_state.get("genitore_select"):
-			# 	aggiorna_session_state(genitore=st.session_state["genitore_select"])
-			# elif st.session_state.get("email_select"):
-			# 	aggiorna_session_state(email=st.session_state["email_select"])
-			# elif st.session_state.get("telefono_select"):
-			# 	aggiorna_session_state(telefono=st.session_state["telefono_select"])
+            # DISATTIVATO: causava modifica session_state dopo i widget
+            # if selezione_alunno:
+            #   aggiorna_session_state(alunno=selezione_alunno)
+            # elif st.session_state.get("genitore_select"):
+            #   aggiorna_session_state(genitore=st.session_state["genitore_select"])
+            # elif st.session_state.get("email_select"):
+            #   aggiorna_session_state(email=st.session_state["email_select"])
+            # elif st.session_state.get("telefono_select"):
+            #   aggiorna_session_state(telefono=st.session_state["telefono_select"])
 
             # --- Filtra mesi NON pagati (nuova logica a colonne) ---
             mesi_non_pagati = lista_mesi.copy()
