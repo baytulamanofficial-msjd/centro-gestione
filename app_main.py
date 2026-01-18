@@ -66,32 +66,48 @@ if check_password():
 
         try:
             sheet = get_sheet()
-            lista_mesi = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
-                          "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"]
 
-            # --- Legge dati dal database per completamento automatico ---
-            data_sheet = sheet.get_all_values()
+            # ===== 1️⃣ UNA SOLA LETTURA =====
+            all_values = sheet.get_all_values()
+
+            if len(all_values) < 3:
+                st.warning("Database vuoto o incompleto")
+                st.stop()
+
+            headers = all_values[1]
+            rows = all_values[2:]
+
+            lista_mesi = [
+                "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
+                "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"
+            ]
+
+            # ===== 2️⃣ DATAFRAME =====
+            df_db = pd.DataFrame(rows, columns=headers)
+
+            lista_alunni = sorted(df_db["Nome Alunno"].dropna().unique().tolist())
+            lista_genitori = sorted(df_db["Nome Genitore"].dropna().unique().tolist())
+            lista_email = sorted(df_db["Email"].dropna().unique().tolist())
+            lista_telefono = sorted(df_db["Telefono"].dropna().unique().tolist())
+
+            # ===== 3️⃣ AUTOCOMPILAZIONE =====
             dati_alunni = {}
-            lista_alunni = []
-
-            if len(data_sheet) >= 2:
-                headers = data_sheet[1]
-                rows = data_sheet[2:]
-                df_db = pd.DataFrame(rows, columns=headers)
-
-                lista_alunni = sorted(df_db["Nome Alunno"].dropna().unique().tolist())
-                lista_genitori = sorted(df_db["Nome Genitore"].dropna().unique().tolist())
-                lista_email = sorted(df_db["Email"].dropna().unique().tolist())
-                lista_telefono = sorted(df_db["Telefono"].dropna().unique().tolist())
-
-                # Creiamo dizionario per autocompletamento
-                for _, r in df_db.iterrows():
-                    dati_alunni[r["Nome Alunno"].strip()] = {
+            for _, r in df_db.iterrows():
+                nome = r["Nome Alunno"]
+                if nome:
+                    dati_alunni[nome.strip()] = {
                         "Nome Genitore": r.get("Nome Genitore", ""),
                         "Telefono": r.get("Telefono", ""),
                         "Email": r.get("Email", "")
                     }
-                lista_alunni = list(dati_alunni.keys())
+
+            # ===== 4️⃣ FIX 2 → MAPPA NOME → RIGA =====
+            mappa_righe = {}
+            for idx, r in enumerate(rows, start=3):
+                if len(r) > 1 and r[1]:
+                    nome_norm = r[1].strip().lower()
+                    mappa_righe[nome_norm] = idx
+
 
             # --- Nomi Alunni con menu a tendina ---
             # Inizializza session_state se non esistono
@@ -309,14 +325,10 @@ if check_password():
                             if not nome or not nome.strip():
                                 continue
 
+                            # 🔎 Cerco se l'alunno esiste già usando la mappa
                             nome_norm = nome.strip().lower()
+                            idx_riga_esistente = mappa_righe.get(nome_norm)  # None se non esiste
 
-                            # 🔎 Cerco se l'alunno esiste già
-                            idx_riga_esistente = None
-                            for idx, nome_db in enumerate(nomi_col[2:], start=3):  # saltando prime 2 righe
-                                if nome_db.strip().lower() == nome_norm:
-                                    idx_riga_esistente = idx
-                                    break
 
                             # --- Mesi da aggiornare (indici su Google Sheet)
                             colonne_mesi_idx = [headers.index(mese) + 1 for mese in mesi_da_scrivere]  # +1 perché col_values parte da 1
@@ -343,27 +355,37 @@ if check_password():
                                 # ===== 2️⃣ SCELGO COLORE (alternato per pagamento) =====
                                 colore = COLOR1 if numero_pagamenti % 2 == 0 else COLOR2
 
-                               # ===== 3️⃣ SCRIVO PAGAMENTO + COLORE =====
+                                # ===== PREPARO SCRITTURA IN BLOCCO =====
+                                aggiornamenti = []
+
                                 for col_idx in colonne_mesi_idx:
+                                    cella = gspread.utils.rowcol_to_a1(idx_riga_esistente, col_idx)
 
-                                    sheet.update_cell(
-                                        idx_riga_esistente,
-                                        col_idx,
-                                        f"{importo} | {data_pagamento} | {responsabile}"
-                                    )
+                                    aggiornamenti.append({
+                                        "range": cella,
+                                        "values": [[f"{importo} | {data_pagamento} | {responsabile}"]]
+                                    })
 
-                                    sheet.format(
-                                        gspread.utils.rowcol_to_a1(idx_riga_esistente, col_idx),
-                                        {
+                                # ===== UNA SOLA SCRITTURA =====
+                                if aggiornamenti:
+                                    sheet.batch_update(aggiornamenti)
+                                
+                                # ===== APPLICO COLORI IN BLOCCO =====
+                                formattazioni = []
+                                for col_idx in colonne_mesi_idx:
+                                    formattazioni.append({
+                                        "range": gspread.utils.rowcol_to_a1(idx_riga_esistente, col_idx),
+                                        "format": {
                                             "backgroundColor": {
                                                 "red": int(colore[1:3], 16) / 255,
                                                 "green": int(colore[3:5], 16) / 255,
                                                 "blue": int(colore[5:7], 16) / 255
                                             }
                                         }
-                                    )
+                                    })
 
-                                    registrati += 1
+                                if formattazioni:
+                                sheet.batch_format(formattazioni)
 
                             # --- Caso: alunno nuovo ---
                             else:
