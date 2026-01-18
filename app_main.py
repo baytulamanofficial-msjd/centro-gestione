@@ -385,7 +385,7 @@ if check_password():
                                     })
 
                                 if formattazioni:
-                                sheet.batch_format(formattazioni)
+                                    sheet.batch_format(formattazioni)
 
                             # --- Caso: alunno nuovo ---
                             else:
