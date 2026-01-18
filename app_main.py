@@ -121,9 +121,13 @@ if check_password():
                         st.session_state["num_figli"] += 1
                         st.rerun()
 
-            # --- Altri alunni ---
+            # --- Altri alunni (con selectbox) ---
             for i in range(2, st.session_state["num_figli"] + 1):
-                st.text_input(f"Nome Alunno {i}", key=f"alunno_{i}")
+                st.selectbox(
+                    f"Nome Alunno {i}",
+                    [""] + lista_alunni,
+                    key=f"alunno_{i}_select"
+                )
 
             st.write("---")
 
@@ -261,7 +265,7 @@ if check_password():
 
                 # Altri figli (text_input)
                 for i in range(2, st.session_state["num_figli"] + 1):
-                    nome_extra = st.session_state.get(f"alunno_{i}", "").strip()
+                    nome_extra = st.session_state.get(f"alunno_{i}_select", "").strip()
                     if nome_extra:
                         nomi_alunni.append(nome_extra)
 
