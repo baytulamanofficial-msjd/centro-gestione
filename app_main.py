@@ -1,3 +1,4 @@
+#qua faccio le modifiche poi metto si Github
 import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
@@ -34,11 +35,144 @@ def check_password():
         return False
     return True
 
+# ===== FUNZIONE SALVA DATI SU GOOGLE SHEET =====
+def salva_dati():
+    payload = st.session_state["payload_salvataggio"]
+    sheet = payload["sheet"]
+    nomi_alunni = payload["nomi_alunni"]
+    nome_genitore = payload["nome_genitore"]
+    telefono = payload["telefono"]
+    email = payload["email"]
+    importo = payload["importo"]
+    data_pagamento = payload["data_pagamento"]
+    responsabile = payload["responsabile"]
+    tipo_pagamento = payload["tipo_pagamento"]
+    mese_singolo = payload["mese_singolo"]
+    mese_da = payload["mese_da"]
+    mese_a = payload["mese_a"]
+    lista_mesi = payload["lista_mesi"]
+    headers = payload["headers"]
+    mappa_righe = payload["mappa_righe"]
+
+    registrati = 0
+
+    # Definizione colori
+    COLOR1 = "FF94DCF8"
+    COLOR2 = "FFF7C7AC"
+
+    # Determino mesi da aggiornare
+    if tipo_pagamento == "Un mese":
+        mesi_da_scrivere = [mese_singolo]
+    else:
+        idx_da = lista_mesi.index(mese_da)
+        idx_a = lista_mesi.index(mese_a)
+        mesi_da_scrivere = lista_mesi[idx_da:idx_a + 1]
+
+    for nome in nomi_alunni:
+        if not nome or not nome.strip():
+            continue
+
+        # 🔎 Cerco se l'alunno esiste già usando la mappa
+        nome_norm = nome.strip().lower()
+        idx_riga_esistente = mappa_righe.get(nome_norm)
+
+        colonne_mesi_idx = [headers.index(mese) + 1 for mese in mesi_da_scrivere]
+
+        if idx_riga_esistente:
+            # Alunno esistente → aggiorno valori e colori
+            riga_attuale = sheet.row_values(idx_riga_esistente)
+            date_pagamenti = set()
+
+            for cella in riga_attuale:
+                if "|" in cella:
+                    try:
+                        parti = cella.split("|")
+                        data = parti[1].strip()
+                        date_pagamenti.add(data)
+                    except:
+                        pass
+
+            numero_pagamenti = len(date_pagamenti)
+            colore = COLOR1 if numero_pagamenti % 2 == 0 else COLOR2
+
+            # Scrittura in blocco
+            aggiornamenti = []
+            for col_idx in colonne_mesi_idx:
+                cella = gspread.utils.rowcol_to_a1(idx_riga_esistente, col_idx)
+                aggiornamenti.append({
+                    "range": cella,
+                    "values": [[f"{importo} | {data_pagamento} | {responsabile}"]]
+                })
+
+            if aggiornamenti:
+                sheet.batch_update(aggiornamenti)
+
+            # Colori in blocco
+            formattazioni = []
+            for col_idx in colonne_mesi_idx:
+                formattazioni.append({
+                    "range": gspread.utils.rowcol_to_a1(idx_riga_esistente, col_idx),
+                    "format": {
+                        "backgroundColor": {
+                            "red": int(colore[1:3], 16)/255,
+                            "green": int(colore[3:5], 16)/255,
+                            "blue": int(colore[5:7], 16)/255
+                        }
+                    }
+                })
+            if formattazioni:
+                sheet.batch_format(formattazioni)
+
+        else:
+            # Alunno nuovo
+            id_alunno = len(sheet.col_values(1)) + registrati + 1
+            riga_nuova = [""] * len(headers)
+            riga_nuova[0] = id_alunno
+            riga_nuova[1] = nome
+            riga_nuova[2] = nome_genitore
+            riga_nuova[3] = telefono
+            riga_nuova[4] = email
+
+            for mese, col_idx in zip(mesi_da_scrivere, colonne_mesi_idx):
+                riga_nuova[col_idx] = f"{importo} | {data_pagamento} | {responsabile}"
+
+            sheet.append_row(riga_nuova)
+
+            # Applico colori
+            nuova_riga_idx = len(sheet.get_all_values())
+            for col_idx in colonne_mesi_idx:
+                sheet.format(
+                    gspread.utils.rowcol_to_a1(nuova_riga_idx, col_idx),
+                    {
+                        "backgroundColor": {
+                            "red": int(COLOR1[1:3], 16)/255,
+                            "green": int(COLOR1[3:5], 16)/255,
+                            "blue": int(COLOR1[5:7], 16)/255
+                        }
+                    }
+                )
+            registrati += 1
+
+    if registrati > 0:
+        st.success("Salvato con successo!")
+        st.balloons()
+        st.session_state["num_figli"] = 1
+        st.session_state["conferma"] = False
+        st.rerun()
+
 if check_password():
+
     if "pagina" not in st.session_state:
         st.session_state["pagina"] = "menu"
     if "num_figli" not in st.session_state:
         st.session_state["num_figli"] = 1
+
+    # ===== STATO POPUP CONFERMA =====
+    if "conferma" not in st.session_state:
+        st.session_state["conferma"] = False
+
+    if "payload_salvataggio" not in st.session_state:
+        st.session_state["payload_salvataggio"] = {}
 
     # --- MENU PRINCIPALE ---
     if st.session_state.get("pagina", "menu") == "menu":
@@ -274,6 +408,40 @@ if check_password():
                 responsabile = st.text_input("Responsabile:", value="Sheikh Mahdy Hasan")
                 submit = st.form_submit_button("Salva Tutti")
 
+            # ===== POPUP DI CONFERMA =====
+            if st.session_state.get("conferma", False):
+
+                dati = st.session_state["payload_salvataggio"]
+
+                st.markdown("## 🔒 Conferma dati")
+                st.info("Controlla attentamente i dati prima di procedere")
+
+                st.markdown("### 👤 Alunno/i")
+                for nome in dati["nomi_alunni"]:
+                    st.write(f"- {nome}")
+
+                st.markdown(f"**Genitore:** {dati['nome_genitore']}")
+                st.markdown(f"**Importo:** € {dati['importo']}")
+                st.markdown(f"**Email:** {dati['email']}")
+
+                st.markdown("---")
+                st.markdown("### ❓ Vuole confermare i dati?")
+
+                col1, col2 = st.columns(2)
+
+                with col1:
+                    if st.button("✏️ Modifico"):
+                        st.session_state["conferma"] = False
+                        st.rerun()
+
+                with col2:
+                    if st.button("✅ Confermo"):
+                        st.session_state["conferma"] = False
+                        st.session_state["num_figli"] = 1
+                        # ✅ Chiama la funzione che salva i dati su Google Sheet
+                        salva_dati()
+                        print("Tutto andato a buon fine!")
+
                 # ===== COSTRUISCO LISTA COMPLETA ALUNNI =====
                 nomi_alunni = []
 
@@ -301,131 +469,28 @@ if check_password():
 
                     if errori:
                         st.error(f"⚠️ Campi mancanti: {', '.join(errori)}")
+
                     else:
-                        # --- Preparazione colonne e ID ---
-                        nomi_col = sheet.col_values(2)  # colonna Nome Alunno
-                        id_col = sheet.col_values(1)    # colonna ID
-                        headers = sheet.row_values(2)   # intestazioni (da usare per trovare indice mese)
-                        prossimo_id = len([x for x in id_col if x])  # nuovo ID solo se serve
-                        registrati = 0
-
-                        # --- Definizione colori ---
-                        COLOR1 = "FF94DCF8"
-                        COLOR2 = "FFF7C7AC"
-
-                        # --- Determino mesi da aggiornare ---
-                        if tipo_pagamento == "Un mese":
-                            mesi_da_scrivere = [mese_singolo]
-                        else:
-                            idx_da = lista_mesi.index(mese_da)
-                            idx_a = lista_mesi.index(mese_a)
-                            mesi_da_scrivere = lista_mesi[idx_da:idx_a + 1]
-
-                        for nome in nomi_alunni:
-                            if not nome or not nome.strip():
-                                continue
-
-                            # 🔎 Cerco se l'alunno esiste già usando la mappa
-                            nome_norm = nome.strip().lower()
-                            idx_riga_esistente = mappa_righe.get(nome_norm)  # None se non esiste
-
-
-                            # --- Mesi da aggiornare (indici su Google Sheet)
-                            colonne_mesi_idx = [headers.index(mese) + 1 for mese in mesi_da_scrivere]  # +1 perché col_values parte da 1
-
-                            # --- Caso: alunno già esiste ---
-                            if idx_riga_esistente:
-
-                                # ===== 1️⃣ CONTO I PAGAMENTI GIÀ FATTI (PER DATA) =====
-                                riga_attuale = sheet.row_values(idx_riga_esistente)
-                                date_pagamenti = set()
-
-                                for cella in riga_attuale:
-                                    if "|" in cella:
-                                        try:
-                                            # formato: importo | data | responsabile
-                                            parti = cella.split("|")
-                                            data = parti[1].strip()
-                                            date_pagamenti.add(data)
-                                        except:
-                                            pass
-
-                                numero_pagamenti = len(date_pagamenti)
-
-                                # ===== 2️⃣ SCELGO COLORE (alternato per pagamento) =====
-                                colore = COLOR1 if numero_pagamenti % 2 == 0 else COLOR2
-
-                                # ===== PREPARO SCRITTURA IN BLOCCO =====
-                                aggiornamenti = []
-
-                                for col_idx in colonne_mesi_idx:
-                                    cella = gspread.utils.rowcol_to_a1(idx_riga_esistente, col_idx)
-
-                                    aggiornamenti.append({
-                                        "range": cella,
-                                        "values": [[f"{importo} | {data_pagamento} | {responsabile}"]]
-                                    })
-
-                                # ===== UNA SOLA SCRITTURA =====
-                                if aggiornamenti:
-                                    sheet.batch_update(aggiornamenti)
-                                
-                                # ===== APPLICO COLORI IN BLOCCO =====
-                                formattazioni = []
-                                for col_idx in colonne_mesi_idx:
-                                    formattazioni.append({
-                                        "range": gspread.utils.rowcol_to_a1(idx_riga_esistente, col_idx),
-                                        "format": {
-                                            "backgroundColor": {
-                                                "red": int(colore[1:3], 16) / 255,
-                                                "green": int(colore[3:5], 16) / 255,
-                                                "blue": int(colore[5:7], 16) / 255
-                                            }
-                                        }
-                                    })
-
-                                if formattazioni:
-                                    sheet.batch_format(formattazioni)
-
-                            # --- Caso: alunno nuovo ---
-                            else:
-                                id_alunno = prossimo_id + registrati + 1
-                                riga_nuova = [""] * len(headers)
-                                riga_nuova[0] = id_alunno
-                                riga_nuova[1] = nome
-                                riga_nuova[2] = nome_genitore
-                                riga_nuova[3] = telefono
-                                riga_nuova[4] = email
-
-                                for mese, col_idx in zip(mesi_da_scrivere, colonne_mesi_idx):
-                                    riga_nuova[col_idx] = f"{importo} | {data_pagamento} | {responsabile}"
-
-                                sheet.append_row(riga_nuova)
-
-                                # applico colore ai mesi appena scritti
-                                nuova_riga_idx = len(sheet.get_all_values())  # ultima riga
-                                for col_idx in colonne_mesi_idx:
-                                    sheet.format(
-                                        gspread.utils.rowcol_to_a1(nuova_riga_idx, col_idx),
-                                        {
-                                            "backgroundColor": {
-                                                "red": int(colore[1:3], 16) / 255,
-                                                "green": int(colore[3:5], 16) / 255,
-                                                "blue": int(colore[5:7], 16) / 255
-                                            }
-                                        }
-                                    )
-
-                                registrati += 1
-
-                        if registrati > 0:
-                            st.success("Salvato con successo!")
-                            st.balloons()
-                            st.session_state["num_figli"] = 1
-                            st.rerun()
-
-        except Exception as e:
-            st.error(f"Errore: {e}")
+                        # --- CARICO I DATI NELLO STATO PER IL POPUP ---
+                        st.session_state["payload_salvataggio"] = {
+                            "nomi_alunni": nomi_alunni,
+                            "nome_genitore": nome_genitore,
+                            "telefono": telefono,
+                            "email": email,
+                            "importo": importo,
+                            "data_pagamento": data_pagamento,
+                            "responsabile": responsabile,
+                            "tipo_pagamento": tipo_pagamento,
+                            "mese_singolo": mese_singolo,
+                            "mese_da": mese_da,
+                            "mese_a": mese_a,
+                            "lista_mesi": lista_mesi,
+                            "sheet": sheet,
+                            "headers": headers,
+                            "mappa_righe": mappa_righe
+                        }
+                        st.session_state["conferma"] = True
+                        st.rerun()
 
     # --- VISUALIZZAZIONE ---
     elif st.session_state.get("pagina") == "visualizza":
