@@ -347,7 +347,7 @@ if check_password():
                         st.session_state["telefono_select"] = d.get("Telefono", "")
                         break
             elif telefono:
-                    for al, d in dati_alunni.items():
+                for al, d in dati_alunni.items():
                     if d["Telefono"] == telefono:
                         st.session_state["alunno_1_select"] = al
                         st.session_state["genitore_select"] = d.get("Nome Genitore", "")
