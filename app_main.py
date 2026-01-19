@@ -198,11 +198,15 @@ if check_password():
 
         st.title("Nuova Registrazione")
 
-        try:
-            sheet = get_sheet()
+            try:
+                sheet = get_sheet()
 
-            # ===== 1️⃣ UNA SOLA LETTURA =====
-            all_values = sheet.get_all_values()
+                # ===== 1️⃣ UNA SOLA LETTURA =====
+                all_values = sheet.get_all_values()
+
+            except Exception as e:
+                st.error(f"Errore nel caricamento del foglio: {e}")
+                st.stop()  # Blocca qui se errore
 
             if len(all_values) < 3:
                 st.warning("Database vuoto o incompleto")
