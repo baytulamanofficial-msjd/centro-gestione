@@ -502,7 +502,7 @@ if check_password():
                         st.rerun()
 
     # --- VISUALIZZAZIONE ---
-    elif st.session_state.get("pagina") == "visualizza":
+    if st.session_state.get("pagina") == "visualizza":
         if st.button("⬅️ Torna al Menu"):
             st.session_state["pagina"] = "menu"
             st.rerun()
