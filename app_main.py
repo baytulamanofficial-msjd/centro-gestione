@@ -501,8 +501,11 @@ if check_password():
                         st.balloons()
                         st.rerun()
 
+            except Exception as e:
+                st.error(f"Errore: {e}")  # <-- chiude il try
+
     # --- VISUALIZZAZIONE ---
-    elif st.session_state.get("pagina") == "visualizza":
+    if st.session_state.get("pagina") == "visualizza":
         if st.button("⬅️ Torna al Menu"):
             st.session_state["pagina"] = "menu"
             st.rerun()
