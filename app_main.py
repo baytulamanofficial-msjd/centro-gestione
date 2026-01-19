@@ -383,11 +383,11 @@ if check_password():
                     break
 
                 # --- Modalità pagamento (reattiva) ---
-                tipo_pagamento = st.radio(
-                    "Seleziona modalità pagamento:",
-                    ["Un mese", "Più mesi"],
-                    horizontal=True
-                )
+            tipo_pagamento = st.radio(
+                "Seleziona modalità pagamento:",
+                ["Un mese", "Più mesi"],
+                horizontal=True
+            )
 
                 # --- Mese / Più mesi (aggiornato con mesi non pagati) ---
                 mese_da, mese_a, mese_singolo = "", "", ""
