@@ -424,7 +424,7 @@ if check_password():
                 for i in range(2, st.session_state["num_figli"] + 1):
                     nome_extra = st.session_state.get(f"alunno_{i}_select", "").strip()
                     if nome_extra:
-                        omi_alunni.append(nome_extra)
+                        nomi_alunni.append(nome_extra)
 
                 if submit:
                     # --- controlli errori ---
