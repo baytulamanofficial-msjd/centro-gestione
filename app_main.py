@@ -397,17 +397,74 @@ if check_password():
                 with col_m2:
                     mese_a = st.selectbox("Al mese:", [""] + mesi_non_pagati)
 
-            # --- FORM SOLO PER SALVATAGGIO ---
-            with st.form("modulo_dati_fissi"):
-                col_imp, col_data = st.columns(2)
-                with col_imp:
-                    importo = st.number_input("Importo (€):", min_value=0, value=0)
-                with col_data:
-                    data_pagamento = st.date_input("Data pagamento:", datetime.now())
+            try:
+                # --- FORM SOLO PER SALVATAGGIO ---
+                with st.form("modulo_dati_fissi"):
+                    col_imp, col_data = st.columns(2)
+                    with col_imp:
+                        importo = st.number_input("Importo (€):", min_value=0, value=0)
+                    with col_data:
+                        data_pagamento = st.date_input("Data pagamento:", datetime.now())
 
-                responsabile = st.text_input("Responsabile:", value="Sheikh Mahdy Hasan")
-                submit = st.form_submit_button("Salva Tutti")
+                    responsabile = st.text_input("Responsabile:", value="Sheikh Mahdy Hasan")
+                    submit = st.form_submit_button("Salva Tutti")
 
+                # ===== COSTRUISCO LISTA COMPLETA ALUNNI =====
+                nomi_alunni = []
+
+                # Primo figlio (selectbox)
+                if st.session_state.get("alunno_1_select"):
+                    nomi_alunni.append(st.session_state["alunno_1_select"].strip())
+
+                # Altri figli (selectbox)
+                for i in range(2, st.session_state["num_figli"] + 1):
+                    nome_extra = st.session_state.get(f"alunno_{i}_select", "").strip()
+                    if nome_extra:
+                        nomi_alunni.append(nome_extra)
+
+                if submit:
+                    # --- controlli errori ---
+                    errori = []
+                    if not nomi_alunni:
+                        errori.append("Nome Alunno")
+                    if not nome_genitore:
+                        errori.append("Nome Genitore")
+                    if not email:
+                        errori.append("Email")
+                    if importo <= 0:
+                        errori.append("Importo")
+                    if tipo_pagamento == "Un mese" and not mese_singolo:
+                        errori.append("Mese")
+                    if tipo_pagamento == "Più mesi" and (not mese_da or not mese_a):
+                        errori.append("Mesi (Da/A)")
+
+                    if errori:
+                        st.error(f"⚠️ Campi mancanti: {', '.join(errori)}")
+                    else:
+                        # --- CARICO I DATI NELLO STATO PER IL POPUP ---
+                        st.session_state["payload_salvataggio"] = {
+                            "nomi_alunni": nomi_alunni,
+                            "nome_genitore": nome_genitore,
+                            "telefono": telefono,
+                            "email": email,
+                            "importo": importo,
+                            "data_pagamento": data_pagamento,
+                            "responsabile": responsabile,
+                            "tipo_pagamento": tipo_pagamento,
+                            "mese_singolo": mese_singolo,
+                            "mese_da": mese_da,
+                            "mese_a": mese_a,
+                            "lista_mesi": lista_mesi,
+                            "sheet": sheet,
+                            "headers": headers,
+                            "mappa_righe": mappa_righe
+                        }
+                        st.session_state["conferma"] = True
+                        st.rerun()
+
+            except Exception as e:
+                st.error(f"Errore: {e}")  # <-- chiude il try
+            
             # ===== POPUP DI CONFERMA =====
             if st.session_state.get("conferma", False):
 
@@ -440,56 +497,8 @@ if check_password():
                         st.session_state["num_figli"] = 1
                         # ✅ Chiama la funzione che salva i dati su Google Sheet
                         salva_dati()
-                        print("Tutto andato a buon fine!")
-
-                # ===== COSTRUISCO LISTA COMPLETA ALUNNI =====
-                nomi_alunni = []
-
-                # Primo figlio (selectbox)
-                if st.session_state.get("alunno_1_select"):
-                    nomi_alunni.append(st.session_state["alunno_1_select"].strip())
-
-                # Altri figli (text_input)
-                for i in range(2, st.session_state["num_figli"] + 1):
-                    nome_extra = st.session_state.get(f"alunno_{i}_select", "").strip()
-                    if nome_extra:
-                        nomi_alunni.append(nome_extra)
-
-                if submit:
-                    errori = []
-                    if not nomi_alunni:
-                        errori.append("Nome Alunno")
-
-                    if not nome_genitore: errori.append("Nome Genitore")
-                    if not email: errori.append("Email")
-                    if importo <= 0: errori.append("Importo")
-
-                    if tipo_pagamento == "Un mese" and not mese_singolo: errori.append("Mese")
-                    if tipo_pagamento == "Più mesi" and (not mese_da or not mese_a): errori.append("Mesi (Da/A)")
-
-                    if errori:
-                        st.error(f"⚠️ Campi mancanti: {', '.join(errori)}")
-
-                    else:
-                        # --- CARICO I DATI NELLO STATO PER IL POPUP ---
-                        st.session_state["payload_salvataggio"] = {
-                            "nomi_alunni": nomi_alunni,
-                            "nome_genitore": nome_genitore,
-                            "telefono": telefono,
-                            "email": email,
-                            "importo": importo,
-                            "data_pagamento": data_pagamento,
-                            "responsabile": responsabile,
-                            "tipo_pagamento": tipo_pagamento,
-                            "mese_singolo": mese_singolo,
-                            "mese_da": mese_da,
-                            "mese_a": mese_a,
-                            "lista_mesi": lista_mesi,
-                            "sheet": sheet,
-                            "headers": headers,
-                            "mappa_righe": mappa_righe
-                        }
-                        st.session_state["conferma"] = True
+                        st.success("✅ Dati salvati correttamente")
+                        st.balloons()
                         st.rerun()
 
     # --- VISUALIZZAZIONE ---
