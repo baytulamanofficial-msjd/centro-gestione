@@ -3,6 +3,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 import pandas as pd
 from datetime import datetime
+from mailer import invia_ricevuta_email
 
 # Configurazione Pagina
 st.set_page_config(page_title="Baytul Aman Monza", page_icon="📖", layout="wide")
@@ -562,10 +563,40 @@ if check_password():
                     if st.button("✅ Confermo"):
                         st.session_state["conferma"] = False
                         st.session_state["num_figli"] = 1
-                        # ✅ Chiama la funzione che salva i dati su Google Sheet
+
+                        # ✅ Salvataggio su Google Sheet
                         salva_dati()
                         st.success("✅ Dati salvati correttamente")
                         st.balloons()
+
+                        # 📧 INVIO RICEVUTE VIA MAIL
+                        dati = st.session_state["payload_salvataggio"]
+                        nomi_alunni = dati["nomi_alunni"]
+                        nome_genitore = dati["nome_genitore"]
+                        email_destinatario = dati["email"]
+                        importo = dati["importo"]
+                        responsabile = dati["responsabile"]
+
+                        # Determina mesi pagati
+                        if dati["tipo_pagamento"] == "Un mese":
+                            mesi_pagati = dati["mese_singolo"]
+                        else:
+                            mesi_pagati = f"{dati['mese_da']} - {dati['mese_a']}"
+
+                        # Invia mail per ogni alunno
+                        for nome_alunno in nomi_alunni:
+                            try:
+                                invia_ricevuta_email(
+                                    email_destinatario=email_destinatario,
+                                    nome_genitore=nome_genitore,
+                                    nome_alunno=nome_alunno,
+                                    importo=importo,
+                                    mesi_pagati=mesi_pagati,
+                                    resp=responsabile
+                                )
+                            except Exception as e:
+                                st.error(f"Errore invio mail per {nome_alunno}: {e}")
+
                         st.rerun()
 
     # --- VISUALIZZAZIONE ---
