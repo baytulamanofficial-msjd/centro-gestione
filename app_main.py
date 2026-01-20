@@ -20,38 +20,32 @@ def ensure_worksheet_annuale(spreadsheet):
         if anno_precedente in nomi_fogli:
             ws_old = spreadsheet.worksheet(anno_precedente)
 
-            # 📌 PRENDE SOLO A1:E2 (struttura + intestazioni)
-            dati_base = ws_old.get("A1:E2")
+            # 🔹 Copia solo intestazioni (A1:Q2) + colonne A-E (righe 3-300)
+            dati_intestazioni = ws_old.get("A1:Q2")
+            dati_studenti = ws_old.get("A3:E300")  # ID + Nome Alunno + Genitore + Telefono + Email
+
+            righe = max(len(dati_intestazioni) + len(dati_studenti), 300)
+            colonne = max(len(dati_intestazioni[0]) if dati_intestazioni else 20, 20)
 
             ws_new = spreadsheet.add_worksheet(
                 title=anno_corrente,
-                rows=100,
-                cols=20
+                rows=righe,
+                cols=colonne
             )
 
-            if dati_base:
-                ws_new.update("A1", dati_base)
+            # 🔹 Aggiorna il nuovo foglio
+            if dati_intestazioni:
+                ws_new.update("A1", dati_intestazioni)
+            if dati_studenti:
+                ws_new.update("A3", dati_studenti)
 
-                dati = ws_old.get_all_values()
-
-                righe = max(len(dati), 100)
-                colonne = max(len(dati[0]) if dati else 10, 10)
-
-                ws_new = spreadsheet.add_worksheet(
-                    title=anno_corrente,
-                    rows=righe,
-                    cols=colonne
-                )
-
-                if dati:
-                    ws_new.update("A1", dati)
-            else:
-                # Caso rarissimo: primo anno assoluto
-                spreadsheet.add_worksheet(
-                    title=anno_corrente,
-                    rows=100,
-                    cols=20
-                )
+        else:
+            # Caso rarissimo: primo anno assoluto
+            spreadsheet.add_worksheet(
+                title=anno_corrente,
+                rows=300,
+                cols=20
+            )
 
     # --- MANTIENE SOLO GLI ULTIMI 10 ANNI ---
     worksheets = spreadsheet.worksheets()
@@ -61,7 +55,6 @@ def ensure_worksheet_annuale(spreadsheet):
     while len(fogli_anno) > 10:
         anno_vecchio, ws_vecchio = fogli_anno.pop(0)
         spreadsheet.del_worksheet(ws_vecchio)
-
 
 # Funzione per connettersi a Google Sheets
 def get_sheet():
