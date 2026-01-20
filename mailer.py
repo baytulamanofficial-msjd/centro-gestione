@@ -9,7 +9,7 @@ def invia_ricevuta_email(
     nome_alunno: str,
     importo: float,
     mesi_pagati: str,
-    resp: str
+    responsabile: str
 ):
     """
     Invia la ricevuta di pagamento via Gmail SMTP
@@ -34,7 +34,7 @@ Dettagli della ricevuta:
 - Importo: €{importo}
 - Periodo: {mesi_pagati}
 - Data: {date.today().strftime("%d/%m/%Y")}
-- Ricevuto da: #nome responsabile qua
+- Ricevuto da: {responsabile}
 
 Questa è una mail automatica, si prega di non rispondere. JazakAllah.
 Assalamualaikum wa rohmatullah,
@@ -51,4 +51,5 @@ Baytul Aman Monza.
     # 🚀 INVIO
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
         server.login(EMAIL_MITTENTE, PASSWORD_APP)
+
         server.send_message(msg)
