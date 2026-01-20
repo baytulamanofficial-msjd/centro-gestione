@@ -19,26 +19,39 @@ def ensure_worksheet_annuale(spreadsheet):
     if anno_corrente not in nomi_fogli:
         if anno_precedente in nomi_fogli:
             ws_old = spreadsheet.worksheet(anno_precedente)
-            dati = ws_old.get_all_values()
 
-            righe = max(len(dati), 100)
-            colonne = max(len(dati[0]) if dati else 10, 10)
+            # 📌 PRENDE SOLO A1:E2 (struttura + intestazioni)
+            dati_base = ws_old.get("A1:E2")
 
             ws_new = spreadsheet.add_worksheet(
-                title=anno_corrente,
-                rows=righe,
-                cols=colonne
-            )
-
-            if dati:
-                ws_new.update("A1", dati)
-        else:
-            # Caso rarissimo: primo anno assoluto
-            spreadsheet.add_worksheet(
                 title=anno_corrente,
                 rows=100,
                 cols=20
             )
+
+            if dati_base:
+                ws_new.update("A1", dati_base)
+
+                dati = ws_old.get_all_values()
+
+                righe = max(len(dati), 100)
+                colonne = max(len(dati[0]) if dati else 10, 10)
+
+                ws_new = spreadsheet.add_worksheet(
+                    title=anno_corrente,
+                    rows=righe,
+                    cols=colonne
+                )
+
+                if dati:
+                    ws_new.update("A1", dati)
+            else:
+                # Caso rarissimo: primo anno assoluto
+                spreadsheet.add_worksheet(
+                    title=anno_corrente,
+                    rows=100,
+                    cols=20
+                )
 
     # --- MANTIENE SOLO GLI ULTIMI 10 ANNI ---
     worksheets = spreadsheet.worksheets()
@@ -242,7 +255,7 @@ if check_password():
                 st.session_state["pagina"] = "registro"
                 st.rerun()
         with col2:
-            if st.button("📊 Visualizza database", use_container_width=True):
+            if st.button("📊 Visualizzo database", use_container_width=True):
                 st.session_state["pagina"] = "visualizza"
                 st.rerun()
 
@@ -253,7 +266,7 @@ if check_password():
             st.session_state["pagina"] = "menu"
             st.rerun()
 
-        st.title("Nuova Registrazione")
+        st.title("Gestione Pagamento")
 
         try:
             sheet = get_sheet()
