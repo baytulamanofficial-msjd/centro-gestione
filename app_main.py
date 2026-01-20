@@ -7,12 +7,70 @@ from datetime import datetime
 # Configurazione Pagina
 st.set_page_config(page_title="Baytul Aman Monza", page_icon="📖", layout="wide")
 
+def ensure_worksheet_annuale(spreadsheet):
+    anno_corrente = str(datetime.now().year)
+    anno_precedente = str(datetime.now().year - 1)
+
+    worksheets = spreadsheet.worksheets()
+    nomi_fogli = [ws.title for ws in worksheets if ws.title.isdigit()]
+    anni = sorted([int(nome) for nome in nomi_fogli])
+
+    # --- CREA FOGLIO ANNO CORRENTE SE NON ESISTE ---
+    if anno_corrente not in nomi_fogli:
+        if anno_precedente in nomi_fogli:
+            ws_old = spreadsheet.worksheet(anno_precedente)
+            dati = ws_old.get_all_values()
+
+            righe = max(len(dati), 100)
+            colonne = max(len(dati[0]) if dati else 10, 10)
+
+            ws_new = spreadsheet.add_worksheet(
+                title=anno_corrente,
+                rows=righe,
+                cols=colonne
+            )
+
+            if dati:
+                ws_new.update("A1", dati)
+        else:
+            # Caso rarissimo: primo anno assoluto
+            spreadsheet.add_worksheet(
+                title=anno_corrente,
+                rows=100,
+                cols=20
+            )
+
+    # --- MANTIENE SOLO GLI ULTIMI 10 ANNI ---
+    worksheets = spreadsheet.worksheets()
+    fogli_anno = [(int(ws.title), ws) for ws in worksheets if ws.title.isdigit()]
+    fogli_anno.sort(key=lambda x: x[0])
+
+    while len(fogli_anno) > 10:
+        anno_vecchio, ws_vecchio = fogli_anno.pop(0)
+        spreadsheet.del_worksheet(ws_vecchio)
+
+
 # Funzione per connettersi a Google Sheets
 def get_sheet():
-    scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
-    creds = Credentials.from_service_account_info(st.secrets["gspread"], scopes=scope)
+    scope = [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive"
+    ]
+
+    creds = Credentials.from_service_account_info(
+        st.secrets["gspread"],
+        scopes=scope
+    )
+
     client = gspread.authorize(creds)
-    return client.open("Database_pagamenti").worksheet("2026")
+    spreadsheet = client.open("Database_pagamenti")
+
+    # 🔁 CREA / GESTISCE FOGLIO ANNUALE
+    ensure_worksheet_annuale(spreadsheet)
+
+    # 🎯 TORNA SEMPRE IL FOGLIO DELL'ANNO CORRENTE
+    anno_corrente = str(datetime.now().year)
+    return spreadsheet.worksheet(anno_corrente)
 
 # Funzione Login
 def check_password():
