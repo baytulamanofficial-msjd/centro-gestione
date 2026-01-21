@@ -227,7 +227,7 @@ def salva_dati():
         st.balloons()
         st.session_state["num_figli"] = 1
         st.session_state["conferma"] = False
-        st.rerun()
+        #st.rerun() <-- tolto da qua
 
 if check_password():
 
