@@ -251,6 +251,7 @@ if check_password():
         col1, col2 = st.columns(2)
         with col1:
             if st.button("📝 Registro un pagamento", use_container_width=True):
+                st.session_state["mail_inviata"] = False
                 st.session_state["pagina"] = "registro"
                 st.rerun()
         with col2:
@@ -544,7 +545,7 @@ if check_password():
                 dati = st.session_state["payload_salvataggio"]
 
                 st.markdown("## 🔒 Conferma dati")
-                st.info("Controlla attentamente i dati prima di procedere")
+                st.info("Controlli attentamente i dati prima di procedere")
 
                 st.markdown("### 👤 Alunno/i")
                 for nome in dati["nomi_alunni"]:
