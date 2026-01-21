@@ -589,20 +589,27 @@ if check_password():
                             mesi_pagati = f"{dati['mese_da']} - {dati['mese_a']}"
 
                         # Invia mail per ogni alunno
-                        for nome_alunno in nomi_alunni:
-                            try:
-                                invia_ricevuta_email(
-                                    email_destinatario=email_destinatario,
-                                    nome_genitore=nome_genitore,
-                                    nome_alunno=nome_alunno,
-                                    importo=importo,
-                                    mesi_pagati=mesi_pagati,
-                                    resp=responsabile
-                                )
-                            except Exception as e:
-                                st.error(f"Errore invio mail per {nome_alunno}: {e}")
+                        if not st.session_state.get("mail_inviata", False):
+                            for nome_alunno in nomi_alunni:
+                                try:
+                                    invia_ricevuta_email(
+                                        email_destinatario=email_destinatario,
+                                        nome_genitore=nome_genitore,
+                                        nome_alunno=nome_alunno,
+                                        importo=importo,
+                                        mesi_pagati=mesi_pagati,
+                                        responsabile=responsabile
+                                    )
+                                except Exception as e:
+                                    st.error(f"Errore invio mail per {nome_alunno}: {e}")
+                                    
+                            # ✅ SEGNA CHE LA MAIL È STATA INVIATA
+                            st.session_state["mail_inviata"] = True
 
-                        st.rerun()
+                            # (opzionale ma consigliato)
+                            st.success("📧 Ricevuta inviata via email")
+
+                            st.rerun()
 
     # --- VISUALIZZAZIONE ---
     if st.session_state.get("pagina") == "visualizza":
