@@ -79,6 +79,11 @@ def get_sheet():
     anno_corrente = str(datetime.now().year)
     return spreadsheet.worksheet(anno_corrente)
 
+@st.cache_data(ttl=600)
+def leggi_dati_sheet():
+    sheet = get_sheet()
+    return sheet.get_all_values()
+
 # Funzione Login
 def check_password():
     if "password_correct" not in st.session_state:
