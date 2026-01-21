@@ -276,6 +276,11 @@ if check_password():
 
             all_values = st.session_state["db_cache"]
 
+            lista_mesi = [
+                "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
+                "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"
+            ]
+
             # DataFrame dai dati in cache
             if len(all_values) >= 2:
                 headers = all_values[1]
@@ -306,11 +311,6 @@ if check_password():
         except Exception as e:
             st.error(f"Errore nel caricamento del foglio: {e}")
             st.stop()  # Blocca qui se errore
-
-        lista_mesi = [
-            "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
-            "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"
-        ]
 
         # ===== 2️⃣ DATAFRAME =====
         df_db = pd.DataFrame(rows, columns=headers)
