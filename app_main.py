@@ -79,7 +79,7 @@ def get_sheet():
     anno_corrente = str(datetime.now().year)
     return spreadsheet.worksheet(anno_corrente)
 
-@st.cache_data(ttl=600)
+@st.cache_data(ttl=3600)
 def leggi_dati_sheet():
     sheet = get_sheet()
     return sheet.get_all_values()
@@ -227,7 +227,6 @@ def salva_dati():
         st.balloons()
         st.session_state["num_figli"] = 1
         st.session_state["conferma"] = False
-        #st.rerun() <-- tolto da qua
 
 if check_password():
 
@@ -271,19 +270,42 @@ if check_password():
         try:
             sheet = get_sheet()
 
-            # ===== 1️⃣ UNA SOLA LETTURA =====
-            all_values = sheet.get_all_values()
+            # 🔹 Usa cache in session_state per leggere il foglio UNA volta sola
+            if "db_cache" not in st.session_state:
+                st.session_state["db_cache"] = sheet.get_all_values()
+
+            all_values = st.session_state["db_cache"]
+
+            # DataFrame dai dati in cache
+            if len(all_values) >= 2:
+                headers = all_values[1]
+                rows = all_values[2:]
+                df_db = pd.DataFrame(rows, columns=headers)
+
+                # 🔹 Selezione alunno
+                selezione_alunno = st.session_state.get("alunno_1_select", "")
+
+                if selezione_alunno:
+                    # 🔹 Filtra il DataFrame per l'alunno selezionato
+                    df_alunno = df_db[df_db["Nome Alunno"].str.strip().str.lower() == selezione_alunno.strip().lower()]
+    
+                    if not df_alunno.empty:
+                        riga = df_alunno.iloc[0]
+
+                        # 🔹 Calcolo mesi non pagati
+                        mesi_non_pagati = []
+                        for mese in lista_mesi:
+                            val = riga.get(mese, "")
+                            if not val.strip():  # se vuoto → non pagato
+                                mesi_non_pagati.append(mese)
+
+            else:
+                st.warning("Database vuoto o incompleto")
+                st.stop()
 
         except Exception as e:
             st.error(f"Errore nel caricamento del foglio: {e}")
             st.stop()  # Blocca qui se errore
-
-        if len(all_values) < 3:
-            st.warning("Database vuoto o incompleto")
-            st.stop()
-
-        headers = all_values[1]
-        rows = all_values[2:]
 
         lista_mesi = [
             "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
@@ -572,6 +594,12 @@ if check_password():
 
                         # ✅ Salvataggio su Google Sheet
                         salva_dati()
+
+                        # 🔹 Cancella cache così la prossima lettura è aggiornata
+                        if "db_cache" in st.session_state:
+                            del st.session_state["db_cache"]
+                        
+                        # 🔹 Feedback all'utente
                         st.success("✅ Dati salvati correttamente")
                         st.balloons()
 
@@ -605,10 +633,10 @@ if check_password():
                                     st.error(f"Errore invio mail per {nome_alunno}: {e}")
                                     
                             # ✅ SEGNA CHE LA MAIL È STATA INVIATA
-                            st.session_state["mail_inviata"] = True
+                            st.session_state["mail_inviata"] = True #questa e quella sotto l'ho lascio o cancello?
 
                             # (opzionale ma consigliato)
-                            st.success("📧 Ricevuta inviata via email")
+                            st.success("📧 Ricevuta inviata via email") #quesa?
 
                             st.rerun()
 
