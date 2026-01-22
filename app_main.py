@@ -380,6 +380,8 @@ if check_password():
 
         # --- Nomi Alunni con menu a tendina ---
         # Inizializza session_state se non esistono
+        if "alunno_1_text" not in st.session_state:
+            st.session_state["alunno_1_text"] = ""
         if "alunno_1_select" not in st.session_state:
             st.session_state["alunno_1_select"] = ""
         if "genitore_select" not in st.session_state:
@@ -392,11 +394,23 @@ if check_password():
         # --- Nome Alunno principale ---
         col_nome, col_piu = st.columns([0.9, 0.1])
         with col_nome:
-            selezione_alunno = st.selectbox(
-                "Nome Alunno 1",
+            st.selectbox(
+                "Nome Alunno 1 (se esiste)",
                 [""] + lista_alunni,
                 key="alunno_1_select"
-                )
+            )
+
+            nome_alunno_1 = st.text_input(
+                "Nome Alunno 1",
+                value=st.session_state.get("alunno_1_text", "")
+            )
+
+            # 🔁 sincronizzazione
+            if st.session_state["alunno_1_select"] and \
+                nome_alunno_1 != st.session_state["alunno_1_select"]:
+                nome_alunno_1 = st.session_state["alunno_1_select"]
+
+            st.session_state["alunno_1_text"] = nome_alunno_1
 
         with col_piu:
             st.write("")
@@ -409,12 +423,34 @@ if check_password():
                     st.rerun()
 
         # --- Altri alunni (con selectbox) ---
+        nomi_figli_extra = []
+
         for i in range(2, st.session_state["num_figli"] + 1):
+            select_key = f"alunno_{i}_select"
+            text_key = f"alunno_{i}_text"
+
+            if text_key not in st.session_state:
+                st.session_state[text_key] = ""
+
             st.selectbox(
-                f"Nome Alunno {i}",
+                f"Nome Alunno {i} (se esiste)",
                 [""] + lista_alunni,
-                 key=f"alunno_{i}_select"
+                key=select_key
             )
+
+            nome_figlio = st.text_input(
+                f"Nome Alunno {i}",
+                value=st.session_state[text_key]
+            )
+
+            # 🔁 sync
+            if st.session_state[select_key] and nome_figlio != st.session_state[select_key]:
+                nome_figlio = st.session_state[select_key]
+
+            st.session_state[text_key] = nome_figlio
+
+            if nome_figlio:
+                nomi_figli_extra.append(nome_figlio.strip())
 
         st.write("---")
 
@@ -431,30 +467,49 @@ if check_password():
             if st.session_state.get("email_select") != dati.get("Email", ""):
             	st.session_state["email_select"] = dati.get("Email", "")
 
-        # --- ORA creo i selectbox (dopo aver aggiornato session_state) ---
+        # --- ORA creo i selectbox + input (mobile friendly) ---
         col1, col2 = st.columns(2)
+
         with col1:
-            nome_genitore = st.selectbox(
-                "Nome Genitore",
+            st.selectbox(
+                "Nome Genitore (seleziona se esiste)",
                 [""] + lista_genitori,
                 key="genitore_select"
             )
+            nome_genitore = st.text_input(
+                "Nome Genitore",
+                value=st.session_state.get("genitore_select", "")
+            )
+            st.session_state["genitore_select"] = nome_genitore
+
         with col2:
-            telefono = st.selectbox(
-                "Telefono",
+            st.selectbox(
+                "Telefono (seleziona se esiste)",
                 [""] + lista_telefono,
                 key="telefono_select"
             )
+            telefono = st.text_input(
+                "Telefono",
+                value=st.session_state.get("telefono_select", "")
+            )
+            st.session_state["telefono_select"] = telefono
 
         col3, col4 = st.columns(2)
+
         with col3:
-            email = st.selectbox(
-                "Email",
+            st.selectbox(
+                "Email (seleziona se esiste)",
                 [""] + lista_email,
                 key="email_select"
             )
+            email = st.text_input(
+                "Email",
+                value=st.session_state.get("email_select", "")
+            )
+            st.session_state["email_select"] = email
 
-        st.write("---")  # separatore fuori dal for
+        st.write("---")
+
 
         # --- Autocompletamento bidirezionale ---
         def aggiorna_session_state(alunno=None, genitore=None, email=None, telefono=None):
@@ -498,8 +553,8 @@ if check_password():
         # Filtra solo se c'è un alunno selezionato
         mesi_non_pagati = lista_mesi.copy()
 
-        if selezione_alunno:
-            df_alunno = df_db[df_db["Nome Alunno"].str.strip().str.lower() == selezione_alunno.strip().lower()]
+        if nome_alunno_1:
+            df_alunno = df_db[df_db["Nome Alunno"].str.strip().str.lower() == nome_alunno_1.strip().lower()]
 
             if not df_alunno.empty:
                 riga = df_alunno.iloc[0]  # prendo la prima corrispondenza
@@ -544,9 +599,11 @@ if check_password():
                 # ===== COSTRUISCO LISTA COMPLETA ALUNNI =====
                 nomi_alunni = []
 
-                # Primo figlio (selectbox)
-                if st.session_state.get("alunno_1_select"):
-                    nomi_alunni.append(st.session_state["alunno_1_select"].strip())
+                if nome_alunno_1:
+                    nomi_alunni.append(nome_alunno_1.strip())
+
+                for nome in nomi_figli_extra:
+                    nomi_alunni.append(nome)
 
                 # Altri figli (selectbox)
                 for i in range(2, st.session_state["num_figli"] + 1):
