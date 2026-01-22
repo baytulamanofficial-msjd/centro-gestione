@@ -495,23 +495,20 @@ if check_password():
         # elif st.session_state.get("telefono_select"):
         #   aggiorna_session_state(telefono=st.session_state["telefono_select"])
 
-        # --- Filtra mesi NON pagati (nuova logica a colonne) ---
+        # Filtra solo se c'è un alunno selezionato
         mesi_non_pagati = lista_mesi.copy()
 
         if selezione_alunno:
-            headers = all_values[1]
-            nomi_col = [r[1] for r in all_values[2:] if len(r) > 1]
+            df_alunno = df_db[df_db["Nome Alunno"].str.strip().str.lower() == selezione_alunno.strip().lower()]
 
-            for idx, nome_db in enumerate(nomi_col[2:], start=3):
-                if nome_db.strip().lower() == selezione_alunno.strip().lower():
-                    riga = df_db.iloc[idx - 3]   # perché df parte dalla riga 3
+            if not df_alunno.empty:
+                riga = df_alunno.iloc[0]  # prendo la prima corrispondenza
 
-                    for mese in lista_mesi:
-                        col_idx = headers.index(mese)
-                        if col_idx < len(riga) and riga[col_idx].strip():
-                            if mese in mesi_non_pagati:
-                                mesi_non_pagati.remove(mese)
-                    break
+                for mese in lista_mesi:
+                    val = str(riga.get(mese, "")).strip()  # forza stringa
+                    if val:  # se pagato → rimuovi dai non pagati
+                        if mese in mesi_non_pagati:
+                            mesi_non_pagati.remove(mese)
 
             # --- Modalità pagamento (reattiva) ---
             tipo_pagamento = st.radio(
