@@ -613,6 +613,11 @@ if check_password():
 
                 st.markdown(f"**Genitore:** {dati['nome_genitore']}")
                 st.markdown(f"**Importo:** € {dati['importo']}")
+                if dati["tipo_pagamento"] == "Un mese":
+                    periodo = dati["mese_singolo"]
+                else:
+                    periodo = f"{dati['mese_da']} - {dati['mese_a']}"
+                st.markdown(f"**Periodo:** {periodo}")
                 st.markdown(f"**Email:** {dati['email']}")
 
                 st.markdown("---")
