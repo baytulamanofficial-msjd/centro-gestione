@@ -395,7 +395,7 @@ if check_password():
         col_nome, col_piu = st.columns([0.9, 0.1])
         with col_nome:
             st.selectbox(
-                "Nome Alunno 1 (se esiste)",
+                "Nome Alunno 1",
                 [""] + lista_alunni,
                 key="alunno_1_select"
             )
@@ -433,7 +433,7 @@ if check_password():
                 st.session_state[text_key] = ""
 
             st.selectbox(
-                f"Nome Alunno {i} (se esiste)",
+                f"Nome Alunno {i}",
                 [""] + lista_alunni,
                 key=select_key
             )
@@ -470,17 +470,31 @@ if check_password():
         # --- ORA creo i selectbox + input (mobile friendly) ---
         col1, col2 = st.columns(2)
 
+        # init
+        if "genitore_text" not in st.session_state:
+            st.session_state["genitore_text"] = ""
+
         with col1:
             st.selectbox(
-                "Nome Genitore (seleziona se esiste)",
+                "Nome Genitore (se esiste)",
                 [""] + lista_genitori,
                 key="genitore_select"
             )
+
             nome_genitore = st.text_input(
                 "Nome Genitore",
-                value=st.session_state.get("genitore_select", "")
+                value=st.session_state["genitore_text"]
             )
-            st.session_state["genitore_select"] = nome_genitore
+
+            # 🔁 sync SOLO in lettura
+            if st.session_state["genitore_select"]:
+                nome_genitore = st.session_state["genitore_select"]
+
+            st.session_state["genitore_text"] = nome_genitore
+
+        # inizializzazione key
+        if "telefono_text" not in st.session_state:
+            st.session_state["telefono_text"] = ""
 
         with col2:
             st.selectbox(
@@ -488,13 +502,23 @@ if check_password():
                 [""] + lista_telefono,
                 key="telefono_select"
             )
+
             telefono = st.text_input(
                 "Telefono",
-                value=st.session_state.get("telefono_select", "")
+                value=st.session_state["telefono_text"]
             )
-            st.session_state["telefono_select"] = telefono
+
+            # 🔁 sync SOLO in lettura
+            if st.session_state["telefono_select"]:
+                telefono = st.session_state["telefono_select"]
+
+            st.session_state["telefono_text"] = telefono
+
 
         col3, col4 = st.columns(2)
+        # inizializzazione key
+        if "email_text" not in st.session_state:
+            st.session_state["email_text"] = ""
 
         with col3:
             st.selectbox(
@@ -502,14 +526,19 @@ if check_password():
                 [""] + lista_email,
                 key="email_select"
             )
+
             email = st.text_input(
                 "Email",
-                value=st.session_state.get("email_select", "")
+                value=st.session_state["email_text"]
             )
-            st.session_state["email_select"] = email
+
+            # 🔁 sync SOLO in lettura
+            if st.session_state["email_select"]:
+                email = st.session_state["email_select"]
+
+            st.session_state["email_text"] = email
 
         st.write("---")
-
 
         # --- Autocompletamento bidirezionale ---
         def aggiorna_session_state(alunno=None, genitore=None, email=None, telefono=None):
