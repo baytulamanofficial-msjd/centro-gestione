@@ -228,13 +228,45 @@ def salva_dati():
         st.session_state["num_figli"] = 1
         st.session_state["conferma"] = False
 
+# --- FUNZIONE PER ACCEDERE ALLO SHEET ---
+def get_sheet():
+    creds = Credentials.from_service_account_info(
+        st.secrets["gspread"],
+        scopes=[
+            "https://www.googleapis.com/auth/spreadsheets",
+            "https://www.googleapis.com/auth/drive"
+        ]
+    )
+    client = gspread.authorize(creds)
+    spreadsheet = client.open("Database_pagamenti")
+    anno_corrente = str(datetime.now().year)
+    return spreadsheet.worksheet(anno_corrente)
+
+# ===================
+# --- INIZIO APP ----
+# ===================
 if check_password():
 
     if "pagina" not in st.session_state:
         st.session_state["pagina"] = "menu"
     if "num_figli" not in st.session_state:
         st.session_state["num_figli"] = 1
-
+    
+    # --- CREA / CONTROLLA FOGLIO ANNUALE SOLO UNA VOLTA ---
+    if "sheet_ready" not in st.session_state:
+        client = gspread.authorize(
+            Credentials.from_service_account_info(
+                st.secrets["gspread"],
+                scopes=[
+                    "https://www.googleapis.com/auth/spreadsheets",
+                    "https://www.googleapis.com/auth/drive"
+                ]
+            )
+        )
+        spreadsheet = client.open("Database_pagamenti")
+        ensure_worksheet_annuale(spreadsheet)
+        st.session_state["sheet_ready"] = True
+    
     # ===== STATO POPUP CONFERMA =====
     if "conferma" not in st.session_state:
         st.session_state["conferma"] = False
@@ -260,6 +292,11 @@ if check_password():
 
     # --- REGISTRAZIONE ---
     elif st.session_state.get("pagina") == "registro":
+
+        # ⛔ BLOCCO ANTI-LETTURA DURANTE SALVATAGGIO
+        if st.session_state.get("in_salvataggio"):
+            st.stop()
+        
         if st.button("⬅️ Torna al Menu"):
             st.session_state["num_figli"] = 1
             st.session_state["pagina"] = "menu"
@@ -268,11 +305,12 @@ if check_password():
         st.title("Gestione Pagamento")
 
         try:
-            sheet = get_sheet()
-
-            # 🔹 Usa cache in session_state per leggere il foglio UNA volta sola
+            # ✅ LETTURA UNA SOLA VOLTA (cache vera)
             if "db_cache" not in st.session_state:
+                sheet = get_sheet()
                 st.session_state["db_cache"] = sheet.get_all_values()
+            else:
+                sheet = get_sheet()  # solo riferimento, NON lettura
 
             all_values = st.session_state["db_cache"]
 
@@ -460,12 +498,12 @@ if check_password():
         mesi_non_pagati = lista_mesi.copy()
 
         if selezione_alunno:
-            headers = sheet.row_values(2)
-            nomi_col = sheet.col_values(2)
+            headers = all_values[1]
+            nomi_col = [r[1] for r in all_values[2:] if len(r) > 1]
 
             for idx, nome_db in enumerate(nomi_col[2:], start=3):
                 if nome_db.strip().lower() == selezione_alunno.strip().lower():
-                    riga = sheet.row_values(idx)
+                    riga = df_db.iloc[idx - 3]   # perché df parte dalla riga 3
 
                     for mese in lista_mesi:
                         col_idx = headers.index(mese)
@@ -589,19 +627,13 @@ if check_password():
 
                 with col2:
                     if st.button("✅ Confermo"):
+                        # ⛔ blocca riletture durante salvataggio
+                        st.session_state["in_salvataggio"] = True
                         st.session_state["conferma"] = False
                         st.session_state["num_figli"] = 1
 
-                        # ✅ Salvataggio su Google Sheet
+                        # ✅ SOLO scrittura su Google Sheet
                         salva_dati()
-
-                        # 🔹 Cancella cache così la prossima lettura è aggiornata
-                        if "db_cache" in st.session_state:
-                            del st.session_state["db_cache"]
-                        
-                        # 🔹 Feedback all'utente
-                        st.success("✅ Dati salvati correttamente")
-                        st.balloons()
 
                         # 📧 INVIO RICEVUTE VIA MAIL
                         dati = st.session_state["payload_salvataggio"]
@@ -611,13 +643,11 @@ if check_password():
                         importo = dati["importo"]
                         responsabile = dati["responsabile"]
 
-                        # Determina mesi pagati
                         if dati["tipo_pagamento"] == "Un mese":
                             mesi_pagati = dati["mese_singolo"]
                         else:
                             mesi_pagati = f"{dati['mese_da']} - {dati['mese_a']}"
 
-                        # Invia mail per ogni alunno
                         if not st.session_state.get("mail_inviata", False):
                             for nome_alunno in nomi_alunni:
                                 try:
@@ -631,24 +661,40 @@ if check_password():
                                     )
                                 except Exception as e:
                                     st.error(f"Errore invio mail per {nome_alunno}: {e}")
-                                    
-                            # ✅ SEGNA CHE LA MAIL È STATA INVIATA
-                            st.session_state["mail_inviata"] = True #questa e quella sotto l'ho lascio o cancello?
 
-                            # (opzionale ma consigliato)
-                            st.success("📧 Ricevuta inviata via email") #quesa?
+                            st.session_state["mail_inviata"] = True
+                            st.success("📧 Ricevuta inviata via email")
 
-                            st.rerun()
+                        # 🔄 invalida cache DOPO tutto
+                        st.session_state.pop("db_cache", None)
+
+                        st.success("✅ Dati salvati correttamente")
+                        st.balloons()
+
+                        # 🔓 sblocca e rerun UNA SOLA VOLTA
+                        st.session_state["in_salvataggio"] = False
+                        st.rerun()
 
     # --- VISUALIZZAZIONE ---
     if st.session_state.get("pagina") == "visualizza":
+
+        # ⛔ BLOCCO ANTI-LETTURA DURANTE SALVATAGGIO
+        if st.session_state.get("in_salvataggio"):
+            st.stop()
+
         if st.button("⬅️ Torna al Menu"):
             st.session_state["pagina"] = "menu"
             st.rerun()
+
         st.title("Database")
         try:
             sheet = get_sheet()
-            data = sheet.get_all_values()
+
+            # ✅ LETTURA UNA SOLA VOLTA
+            if "db_cache" not in st.session_state:
+                st.session_state["db_cache"] = sheet.get_all_values()
+
+            data = st.session_state["db_cache"]
 
             # Prima riga vuota, intestazioni nella seconda
             if len(data) < 2:
