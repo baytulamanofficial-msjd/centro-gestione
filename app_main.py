@@ -328,18 +328,19 @@ if check_password():
                 # 🔹 Selezione alunno
                 selezione_alunno = st.session_state.get("alunno_1_select", "")
 
+                mesi_non_pagati = []
+
                 if selezione_alunno:
                     # 🔹 Filtra il DataFrame per l'alunno selezionato
                     df_alunno = df_db[df_db["Nome Alunno"].str.strip().str.lower() == selezione_alunno.strip().lower()]
-    
+
                     if not df_alunno.empty:
                         riga = df_alunno.iloc[0]
 
                         # 🔹 Calcolo mesi non pagati
-                        mesi_non_pagati = []
                         for mese in lista_mesi:
-                            val = riga.get(mese, "")
-                            if not val.strip():  # se vuoto → non pagato
+                            val = str(riga.get(mese, "")).strip()  # <- forza stringa anche se NaN
+                            if not val:  # se vuoto → non pagato
                                 mesi_non_pagati.append(mese)
 
             else:
