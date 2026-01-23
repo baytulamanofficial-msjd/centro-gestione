@@ -392,16 +392,16 @@ if check_password():
         if "email_select" not in st.session_state:
             st.session_state["email_select"] = ""
 
-        # --- Nome Alunno principale ---
+        # --- Nome Alunno principale (UNICA CASELLA) ---
         col_nome, col_piu = st.columns([0.9, 0.1])
 
         with col_nome:
-            nome_alunno_1 = st_autocomplete(
-                label="Nome Alunno 1",
-                options=lista_alunni,          # lista nomi
-                key="alunno_1",
-                placeholder="Scrivi o seleziona un nome",
-                max_results=8                  # opzionale
+            nome_alunno_1 = st.selectbox(
+                "Nome Alunno",
+                options=lista_alunni,
+                index=None,
+                placeholder="Scrivi o seleziona un alunno…",
+                key="alunno_1"
             )
 
         with col_piu:
@@ -423,56 +423,37 @@ if check_password():
                 st.session_state["telefono"] = dati.get("Telefono", "")
                 st.session_state["email"] = dati.get("Email", "")
 
-        # --- ORA creo i selectbox + input (mobile friendly) ---
+        # --- DATI GENITORE (UNA CASELLA PER CAMPO) ---
         col1, col2 = st.columns(2)
 
-        # ===== NOME GENITORE =====
-        if "genitore" not in st.session_state:
-            st.session_state["genitore"] = ""
-
         with col1:
-            nome_genitore = st_autocomplete(
-                label="Nome Genitore",
+            nome_genitore = st.selectbox(
+                "Nome Genitore",
                 options=lista_genitori,
-                key="genitore",
-                placeholder="Scrivi o seleziona il nome"
+                index=None,
+                placeholder="Scrivi o seleziona il nome genitore",
+                key="genitore"
             )
-
-            if nome_genitore:
-                st.session_state["genitore"] = nome_genitore.strip()
-
-        # ===== TELEFONO =====
-        if "telefono" not in st.session_state:
-            st.session_state["telefono"] = ""
 
         with col2:
-            telefono = st_autocomplete(
-                label="Telefono",
+            telefono = st.selectbox(
+                "Telefono",
                 options=lista_telefono,
-                key="telefono",
-                placeholder="Scrivi o seleziona il telefono"
+                index=None,
+                placeholder="Scrivi o seleziona il telefono",
+                key="telefono"
             )
-
-            if telefono:
-                st.session_state["telefono"] = telefono.strip()
-
 
         col3, col4 = st.columns(2)
 
-        # ===== EMAIL =====
-        if "email" not in st.session_state:
-            st.session_state["email"] = ""
-
         with col3:
-            email = st_autocomplete(
-                label="Email",
+            email = st.selectbox(
+                "Email",
                 options=lista_email,
-                key="email",
-                placeholder="Scrivi o seleziona l'email"
+                index=None,
+                placeholder="Scrivi o seleziona l'email",
+                key="email"
             )
-
-            if email:
-                st.session_state["email"] = email.strip()
 
         st.write("---")
 
