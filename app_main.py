@@ -4,7 +4,7 @@ from google.oauth2.service_account import Credentials
 import pandas as pd
 from datetime import datetime
 from mailer import invia_ricevuta_email
-from streamlit_autocomplete import st_autocomplete
+from st_autocomplete import st_autocomplete
 
 # Configurazione Pagina
 st.set_page_config(page_title="Baytul Aman Monza", page_icon="📖", layout="wide")
