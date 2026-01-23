@@ -4,6 +4,7 @@ from google.oauth2.service_account import Credentials
 import pandas as pd
 from datetime import datetime
 from mailer import invia_ricevuta_email
+from streamlit_autocomplete import st_autocomplete
 
 # Configurazione Pagina
 st.set_page_config(page_title="Baytul Aman Monza", page_icon="📖", layout="wide")
@@ -393,181 +394,116 @@ if check_password():
 
         # --- Nome Alunno principale ---
         col_nome, col_piu = st.columns([0.9, 0.1])
+
         with col_nome:
-            st.selectbox(
-                "Nome Alunno 1",
-                [""] + lista_alunni,
-                key="alunno_1_select"
+            nome_alunno_1 = st_autocomplete(
+                label="Nome Alunno 1",
+                options=lista_alunni,          # lista nomi
+                key="alunno_1",
+                placeholder="Scrivi o seleziona un nome",
+                max_results=8                  # opzionale
             )
-
-            nome_alunno_1 = st.text_input(
-                "Nome Alunno 1",
-                value=st.session_state.get("alunno_1_text", "")
-            )
-
-            # 🔁 sincronizzazione
-            if st.session_state["alunno_1_select"] and \
-                nome_alunno_1 != st.session_state["alunno_1_select"]:
-                nome_alunno_1 = st.session_state["alunno_1_select"]
-
-            st.session_state["alunno_1_text"] = nome_alunno_1
 
         with col_piu:
             st.write("")
             st.write("")
             if st.button("➕"):
-                st.write("Numero figli:", st.session_state["num_figli"])
-
                 if st.session_state["num_figli"] < 7:
                     st.session_state["num_figli"] += 1
                     st.rerun()
 
-        # --- Altri alunni (con selectbox) ---
-        nomi_figli_extra = []
-
-        for i in range(2, st.session_state["num_figli"] + 1):
-            select_key = f"alunno_{i}_select"
-            text_key = f"alunno_{i}_text"
-
-            if text_key not in st.session_state:
-                st.session_state[text_key] = ""
-
-            st.selectbox(
-                f"Nome Alunno {i}",
-                [""] + lista_alunni,
-                key=select_key
-            )
-
-            nome_figlio = st.text_input(
-                f"Nome Alunno {i}",
-                value=st.session_state[text_key]
-            )
-
-            # 🔁 sync
-            if st.session_state[select_key] and nome_figlio != st.session_state[select_key]:
-                nome_figlio = st.session_state[select_key]
-
-            st.session_state[text_key] = nome_figlio
-
-            if nome_figlio:
-                nomi_figli_extra.append(nome_figlio.strip())
-
         st.write("---")
 
-        # --- Prepara valori autocompilati PRIMA dei selectbox sotto ---
+        # --- Autocompilazione dati genitore in base all'alunno ---
         if selezione_alunno:
             dati = dati_alunni.get(selezione_alunno, {})
 
-            if st.session_state.get("genitore_select") != dati.get("Nome Genitore", ""):
-                st.session_state["genitore_select"] = dati.get("Nome Genitore", "")
-
-            if st.session_state.get("telefono_select") != dati.get("Telefono", ""):
-            	st.session_state["telefono_select"] = dati.get("Telefono", "")
-
-            if st.session_state.get("email_select") != dati.get("Email", ""):
-            	st.session_state["email_select"] = dati.get("Email", "")
+            if dati:
+                st.session_state["genitore"] = dati.get("Nome Genitore", "")
+                st.session_state["telefono"] = dati.get("Telefono", "")
+                st.session_state["email"] = dati.get("Email", "")
 
         # --- ORA creo i selectbox + input (mobile friendly) ---
         col1, col2 = st.columns(2)
 
-        # init
-        if "genitore_text" not in st.session_state:
-            st.session_state["genitore_text"] = ""
+        # ===== NOME GENITORE =====
+        if "genitore" not in st.session_state:
+            st.session_state["genitore"] = ""
 
         with col1:
-            st.selectbox(
-                "Nome Genitore (se esiste)",
-                [""] + lista_genitori,
-                key="genitore_select"
+            nome_genitore = st_autocomplete(
+                label="Nome Genitore",
+                options=lista_genitori,
+                key="genitore",
+                placeholder="Scrivi o seleziona il nome"
             )
 
-            nome_genitore = st.text_input(
-                "Nome Genitore",
-                value=st.session_state["genitore_text"]
-            )
+            if nome_genitore:
+                st.session_state["genitore"] = nome_genitore.strip()
 
-            # 🔁 sync SOLO in lettura
-            if st.session_state["genitore_select"]:
-                nome_genitore = st.session_state["genitore_select"]
-
-            st.session_state["genitore_text"] = nome_genitore
-
-        # inizializzazione key
-        if "telefono_text" not in st.session_state:
-            st.session_state["telefono_text"] = ""
+        # ===== TELEFONO =====
+        if "telefono" not in st.session_state:
+            st.session_state["telefono"] = ""
 
         with col2:
-            st.selectbox(
-                "Telefono (seleziona se esiste)",
-                [""] + lista_telefono,
-                key="telefono_select"
+            telefono = st_autocomplete(
+                label="Telefono",
+                options=lista_telefono,
+                key="telefono",
+                placeholder="Scrivi o seleziona il telefono"
             )
 
-            telefono = st.text_input(
-                "Telefono",
-                value=st.session_state["telefono_text"]
-            )
-
-            # 🔁 sync SOLO in lettura
-            if st.session_state["telefono_select"]:
-                telefono = st.session_state["telefono_select"]
-
-            st.session_state["telefono_text"] = telefono
+            if telefono:
+                st.session_state["telefono"] = telefono.strip()
 
 
         col3, col4 = st.columns(2)
-        # inizializzazione key
-        if "email_text" not in st.session_state:
-            st.session_state["email_text"] = ""
+
+        # ===== EMAIL =====
+        if "email" not in st.session_state:
+            st.session_state["email"] = ""
 
         with col3:
-            st.selectbox(
-                "Email (seleziona se esiste)",
-                [""] + lista_email,
-                key="email_select"
+            email = st_autocomplete(
+                label="Email",
+                options=lista_email,
+                key="email",
+                placeholder="Scrivi o seleziona l'email"
             )
 
-            email = st.text_input(
-                "Email",
-                value=st.session_state["email_text"]
-            )
-
-            # 🔁 sync SOLO in lettura
-            if st.session_state["email_select"]:
-                email = st.session_state["email_select"]
-
-            st.session_state["email_text"] = email
+            if email:
+                st.session_state["email"] = email.strip()
 
         st.write("---")
 
         # --- Autocompletamento bidirezionale ---
-        def aggiorna_session_state(alunno=None, genitore=None, email=None, telefono=None):
-            if alunno:
-                dati = dati_alunni.get(alunno, {})
-                st.session_state["genitore_select"] = dati.get("Nome Genitore", "")
-                st.session_state["telefono_select"] = dati.get("Telefono", "")
-                st.session_state["email_select"] = dati.get("Email", "")
-            elif genitore:
-                for al, d in dati_alunni.items():
-                    if d["Nome Genitore"] == genitore:
-                        st.session_state["alunno_1_select"] = al  # <- punta al campo principale con + 
-                        st.session_state["telefono_select"] = d.get("Telefono", "")
-                        st.session_state["email_select"] = d.get("Email", "")
-                        break
-            elif email:
-                for al, d in dati_alunni.items():
-                    if d["Email"] == email:
-                        st.session_state["alunno_1_select"] = al
-                        st.session_state["genitore_select"] = d.get("Nome Genitore", "")
-                        st.session_state["telefono_select"] = d.get("Telefono", "")
-                        break
-            elif telefono:
-                for al, d in dati_alunni.items():
-                    if d["Telefono"] == telefono:
-                        st.session_state["alunno_1_select"] = al
-                        st.session_state["genitore_select"] = d.get("Nome Genitore", "")
-                        st.session_state["email_select"] = d.get("Email", "")
-                        break
+        #def aggiorna_session_state(alunno=None, genitore=None, email=None, telefono=None):
+            #if alunno:
+                #dati = dati_alunni.get(alunno, {})
+                #st.session_state["genitore_select"] = dati.get("Nome Genitore", "")
+                #st.session_state["telefono_select"] = dati.get("Telefono", "")
+                #st.session_state["email_select"] = dati.get("Email", "")
+            #elif genitore:
+                #for al, d in dati_alunni.items():
+                    #if d["Nome Genitore"] == genitore:
+                        #st.session_state["alunno_1_select"] = al  # <- punta al campo principale con + 
+                        #st.session_state["telefono_select"] = d.get("Telefono", "")
+                        #st.session_state["email_select"] = d.get("Email", "")
+                        #break
+            #elif email:
+                #for al, d in dati_alunni.items():
+                    #if d["Email"] == email:
+                        #st.session_state["alunno_1_select"] = al
+                        #st.session_state["genitore_select"] = d.get("Nome Genitore", "")
+                        #st.session_state["telefono_select"] = d.get("Telefono", "")
+                        #break
+            #elif telefono:
+                #for al, d in dati_alunni.items():
+                    #if d["Telefono"] == telefono:
+                        #st.session_state["alunno_1_select"] = al
+                        #st.session_state["genitore_select"] = d.get("Nome Genitore", "")
+                        #st.session_state["email_select"] = d.get("Email", "")
+                        #break
 
         # DISATTIVATO: causava modifica session_state dopo i widget
         # if selezione_alunno:
