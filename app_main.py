@@ -561,11 +561,16 @@ if check_password():
                 # ===== COSTRUISCO LISTA COMPLETA ALUNNI =====
                 nomi_alunni = []
 
+                # Primo alunno
                 if nome_alunno_1:
                     nomi_alunni.append(nome_alunno_1.strip())
 
-                for nome in nomi_figli_extra:
-                    nomi_alunni.append(nome)
+                # Altri figli aggiunti con "+"
+                for i in range(2, st.session_state["num_figli"] + 1):
+                    nome_extra = st.session_state.get(f"alunno_{i}", "").strip()
+                    if nome_extra:
+                        nomi_alunni.append(nome_extra)
+
 
                 # Altri figli (selectbox)
                 for i in range(2, st.session_state["num_figli"] + 1):
