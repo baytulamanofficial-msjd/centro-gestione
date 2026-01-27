@@ -310,7 +310,7 @@ if check_password():
             st.rerun()
 
         st.title("Gestione Pagamento")
-        
+
         try:
             # ✅ LETTURA UNA SOLA VOLTA (cache)
             if "db_cache" not in st.session_state:
@@ -526,14 +526,12 @@ if check_password():
 
                 # Altri figli aggiunti con "+"
                 for i in range(2, st.session_state["num_figli"] + 1):
-                    nome_extra = st.session_state.get(f"alunno_{i}", "").strip()
+                    nome_extra = get_str_state(f"alunno_{i}")
                     if nome_extra:
                         nomi_alunni.append(nome_extra)
 
-
-                # Altri figli (selectbox)
                 for i in range(2, st.session_state["num_figli"] + 1):
-                    nome_extra = st.session_state.get(f"alunno_{i}_select", "").strip()
+                    nome_extra = get_str_state(f"alunno_{i}_select")
                     if nome_extra:
                         nomi_alunni.append(nome_extra)
 
