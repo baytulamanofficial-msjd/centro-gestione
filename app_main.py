@@ -296,7 +296,7 @@ if check_password():
         # ⛔ BLOCCO ANTI-LETTURA DURANTE SALVATAGGIO
         if st.session_state.get("in_salvataggio"):
             st.stop()
-        
+    
         if st.button("⬅️ Torna al Menu"):
             st.session_state["num_figli"] = 1
             st.session_state["pagina"] = "menu"
@@ -305,12 +305,12 @@ if check_password():
         st.title("Gestione Pagamento")
 
         try:
-            # ✅ LETTURA UNA SOLA VOLTA (cache vera)
+            # ✅ LETTURA UNA SOLA VOLTA (cache)
             if "db_cache" not in st.session_state:
                 sheet = get_sheet()
                 st.session_state["db_cache"] = sheet.get_all_values()
             else:
-                sheet = get_sheet()  # solo riferimento, NON lettura
+                sheet = get_sheet()  # solo riferimento
 
             all_values = st.session_state["db_cache"]
 
@@ -325,31 +325,26 @@ if check_password():
                 rows = all_values[2:]
                 df_db = pd.DataFrame(rows, columns=headers)
 
-                # 🔹 Selezione alunno
-                selezione_alunno = st.session_state.get("alunno_1_select", "")
+                # 🔹 Inizializzazione selezione alunno
+                selezione_alunno = st.session_state.get("alunno_1", "")
 
                 mesi_non_pagati = []
 
                 if selezione_alunno:
-                    # 🔹 Filtra il DataFrame per l'alunno selezionato
                     df_alunno = df_db[df_db["Nome Alunno"].str.strip().str.lower() == selezione_alunno.strip().lower()]
-
                     if not df_alunno.empty:
                         riga = df_alunno.iloc[0]
-
-                        # 🔹 Calcolo mesi non pagati
                         for mese in lista_mesi:
-                            val = str(riga.get(mese, "")).strip()  # <- forza stringa anche se NaN
-                            if not val:  # se vuoto → non pagato
+                            val = str(riga.get(mese, "")).strip()
+                            if not val:
                                 mesi_non_pagati.append(mese)
-
             else:
                 st.warning("Database vuoto o incompleto")
                 st.stop()
 
         except Exception as e:
             st.error(f"Errore nel caricamento del foglio: {e}")
-            st.stop()  # Blocca qui se errore
+            st.stop()
 
         # ===== 2️⃣ DATAFRAME =====
         df_db = pd.DataFrame(rows, columns=headers)
@@ -360,52 +355,36 @@ if check_password():
         lista_telefono = sorted(df_db["Telefono"].dropna().unique().tolist())
 
         # ===== 3️⃣ AUTOCOMPILAZIONE =====
-        dati_alunni = {}
-        for _, r in df_db.iterrows():
-            nome = r["Nome Alunno"]
-            if nome:
-                dati_alunni[nome.strip()] = {
-                    "Nome Genitore": r.get("Nome Genitore", ""),
-                    "Telefono": r.get("Telefono", ""),
-                    "Email": r.get("Email", "")
-                }
+        dati_alunni = {r["Nome Alunno"].strip(): {
+                        "Nome Genitore": r.get("Nome Genitore", ""),
+                        "Telefono": r.get("Telefono", ""),
+                        "Email": r.get("Email", "")
+                    } 
+                    for _, r in df_db.iterrows() if r["Nome Alunno"]}
 
         # ===== FUNZIONE AUTOCOMPILAZIONE =====
         def autocompila_da_alunno():
-            alunno = st.session_state.get("alunno_1")
-
+            alunno = st.session_state.get("alunno_1") or ""
             if not alunno:
                 return
-
-            dati = dati_alunni.get(alunno)
-            if not dati:
-                return
-
+            dati = dati_alunni.get(alunno, {})
             st.session_state["genitore"] = dati.get("Nome Genitore", "")
             st.session_state["telefono"] = dati.get("Telefono", "")
             st.session_state["email"] = dati.get("Email", "")
 
-
-        # ===== 4️⃣ FIX 2 → MAPPA NOME → RIGA =====
+        # ===== 4️⃣ MAPPA NOME → RIGA =====
         mappa_righe = {}
         for idx, r in enumerate(rows, start=3):
             if len(r) > 1 and r[1]:
-                nome_norm = r[1].strip().lower()
-                mappa_righe[nome_norm] = idx
+                mappa_righe[r[1].strip().lower()] = idx
 
+        # --- Inizializza session_state per i campi se non esistono ---
+        for key in ["alunno_1", "genitore", "telefono", "email"]:
+            if key not in st.session_state:
+                st.session_state[key] = ""
 
-        # --- Nomi Alunni con menu a tendina ---
-        # Inizializza session_state se non esistono
-        if "alunno_1_text" not in st.session_state:
-            st.session_state["alunno_1_text"] = ""
-        if "alunno_1_select" not in st.session_state:
-            st.session_state["alunno_1_select"] = ""
-        if "genitore_select" not in st.session_state:
-            st.session_state["genitore_select"] = ""
-        if "telefono_select" not in st.session_state:
-            st.session_state["telefono_select"] = ""
-        if "email_select" not in st.session_state:
-            st.session_state["email_select"] = ""
+        if "num_figli" not in st.session_state:
+            st.session_state["num_figli"] = 1
 
         # --- CREO SELECTBOX DINAMICI PER OGNI FIGLIO ---
         for i in range(1, st.session_state["num_figli"] + 1):
@@ -416,10 +395,11 @@ if check_password():
             else:
                 label = f"Nome Alunno {i}"
                 key = f"alunno_{i}_select"
-                on_change = None  # opzionale, puoi mettere autocompila se vuoi
+                if key not in st.session_state:
+                    st.session_state[key] = ""
+                on_change = None
 
             col_nome, col_piu = st.columns([0.9, 0.1])
-
             with col_nome:
                 st.selectbox(
                     label,
@@ -429,10 +409,8 @@ if check_password():
                     key=key,
                     on_change=on_change
                 )
-
             with col_piu:
                 if i == 1:
-                    # Solo il primo ha il pulsante "+"
                     st.write("")
                     st.write("")
                     if st.button("➕"):
@@ -440,18 +418,16 @@ if check_password():
                             st.session_state["num_figli"] += 1
                             st.rerun()
 
-        # --- Autocompilazione dati genitore in base all'alunno ---
-        if selezione_alunno:
-            dati = dati_alunni.get(selezione_alunno, {})
-
-            if dati:
-                st.session_state["genitore"] = dati.get("Nome Genitore", "")
-                st.session_state["telefono"] = dati.get("Telefono", "")
-                st.session_state["email"] = dati.get("Email", "")
+        # --- Autocompilazione dati genitore in base all'alunno principale ---
+        nome_principale = st.session_state.get("alunno_1") or ""
+        if nome_principale:
+            dati = dati_alunni.get(nome_principale, {})
+            st.session_state["genitore"] = dati.get("Nome Genitore", "")
+            st.session_state["telefono"] = dati.get("Telefono", "")
+            st.session_state["email"] = dati.get("Email", "")
 
         # --- DATI GENITORE (UNA CASELLA PER CAMPO) ---
         col1, col2 = st.columns(2)
-
         with col1:
             nome_genitore = st.selectbox(
                 "Nome Genitore",
@@ -460,7 +436,6 @@ if check_password():
                 placeholder="Scrivi o seleziona il nome genitore",
                 key="genitore"
             )
-
         with col2:
             telefono = st.selectbox(
                 "Telefono",
@@ -471,7 +446,6 @@ if check_password():
             )
 
         col3, col4 = st.columns(2)
-
         with col3:
             email = st.selectbox(
                 "Email",
