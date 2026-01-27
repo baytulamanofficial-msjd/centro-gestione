@@ -652,12 +652,12 @@ if check_password():
                         # 🔄 invalida cache DOPO tutto
                         st.session_state.pop("db_cache", None)
 
-                        st.success("✅ Dati salvati correttamente")
-                        st.balloons()
+                    st.success("✅ Dati salvati correttamente")
+                    st.balloons()
 
-                        # 🔓 sblocca e rerun UNA SOLA VOLTA
-                        st.session_state["in_salvataggio"] = False
-                        st.rerun()
+                    # 🔓 sblocca e rerun UNA SOLA VOLTA
+                    st.session_state["in_salvataggio"] = False
+                    st.rerun()
 
     # --- VISUALIZZAZIONE ---
     if st.session_state.get("pagina") == "visualizza":
