@@ -407,28 +407,38 @@ if check_password():
         if "email_select" not in st.session_state:
             st.session_state["email_select"] = ""
 
-        # --- Nome Alunno principale (UNICA CASELLA) ---
-        col_nome, col_piu = st.columns([0.9, 0.1])
+        # --- CREO SELECTBOX DINAMICI PER OGNI FIGLIO ---
+        for i in range(1, st.session_state["num_figli"] + 1):
+            if i == 1:
+                label = "Nome Alunno"
+                key = "alunno_1"
+                on_change = autocompila_da_alunno
+            else:
+                label = f"Nome Alunno {i}"
+                key = f"alunno_{i}_select"
+                on_change = None  # opzionale, puoi mettere autocompila se vuoi
 
-        with col_nome:
-            nome_alunno_1 = st.selectbox(
-                "Nome Alunno",
-                options=lista_alunni,
-                index=None,
-                placeholder="Scrivi o seleziona un alunno…",
-                key="alunno_1",
-                on_change=autocompila_da_alunno
-            )
+            col_nome, col_piu = st.columns([0.9, 0.1])
 
-        with col_piu:
-            st.write("")
-            st.write("")
-            if st.button("➕"):
-                if st.session_state["num_figli"] < 7:
-                    st.session_state["num_figli"] += 1
-                    st.rerun()
+            with col_nome:
+                st.selectbox(
+                    label,
+                    options=lista_alunni,
+                    index=None,
+                    placeholder="Scrivi o seleziona un alunno…",
+                    key=key,
+                    on_change=on_change
+                )
 
-        st.write("---")
+            with col_piu:
+                if i == 1:
+                    # Solo il primo ha il pulsante "+"
+                    st.write("")
+                    st.write("")
+                    if st.button("➕"):
+                        if st.session_state["num_figli"] < 7:
+                            st.session_state["num_figli"] += 1
+                            st.rerun()
 
         # --- Autocompilazione dati genitore in base all'alunno ---
         if selezione_alunno:
