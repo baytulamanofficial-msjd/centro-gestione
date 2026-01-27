@@ -290,6 +290,10 @@ if check_password():
                 st.session_state["pagina"] = "visualizza"
                 st.rerun()
 
+
+    def get_str_state(key):
+        return str(st.session_state.get(key) or "").strip()
+
     # --- REGISTRAZIONE ---
     elif st.session_state.get("pagina") == "registro":
 
@@ -371,6 +375,10 @@ if check_password():
             st.session_state["genitore"] = dati.get("Nome Genitore", "")
             st.session_state["telefono"] = dati.get("Telefono", "")
             st.session_state["email"] = dati.get("Email", "")
+
+        # ===== FUNZIONE DI SICUREZZA (ANTI None.strip) =====
+        def get_str_state(key):
+            return str(st.session_state.get(key) or "").strip()
 
         # ===== 4️⃣ MAPPA NOME → RIGA =====
         mappa_righe = {}
@@ -461,7 +469,7 @@ if check_password():
         mesi_non_pagati = lista_mesi.copy()
 
         # --- PRIMO ALUNNO: lo prendiamo da session_state ---
-        nome_alunno_1 = st.session_state.get("alunno_1", "").strip()
+        nome_alunno_1 = get_str_state("alunno_1")
 
         if nome_alunno_1:
             df_alunno = df_db[df_db["Nome Alunno"].str.strip().str.lower() == nome_alunno_1.lower()]
