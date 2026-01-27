@@ -295,6 +295,9 @@ if check_password():
         return str(st.session_state.get(key) or "").strip()
 
         # --- REGISTRAZIONE ---
+        if st.session_state.get("pagina") == "menu":
+            pass
+            
         elif st.session_state.get("pagina") == "registro":
 
             # ⛔ BLOCCO ANTI-LETTURA DURANTE SALVATAGGIO
