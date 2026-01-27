@@ -370,16 +370,21 @@ if check_password():
                     "Email": r.get("Email", "")
                 }
 
-        # ===== CALLBACK AUTOCOMPILAZIONE ALUNNO =====
-        def on_alunno_change():
+        # ===== FUNZIONE AUTOCOMPILAZIONE =====
+        def autocompila_da_alunno():
             alunno = st.session_state.get("alunno_1")
+
             if not alunno:
                 return
 
-            dati = dati_alunni.get(alunno, {})
+            dati = dati_alunni.get(alunno)
+            if not dati:
+                return
+
             st.session_state["genitore"] = dati.get("Nome Genitore", "")
             st.session_state["telefono"] = dati.get("Telefono", "")
             st.session_state["email"] = dati.get("Email", "")
+
 
         # ===== 4️⃣ FIX 2 → MAPPA NOME → RIGA =====
         mappa_righe = {}
@@ -402,16 +407,17 @@ if check_password():
         if "email_select" not in st.session_state:
             st.session_state["email_select"] = ""
 
-        # --- Nome Alunno principale (UNICA CASELLA AUTOCOMPLETE) ---
+        # --- Nome Alunno principale (UNICA CASELLA) ---
         col_nome, col_piu = st.columns([0.9, 0.1])
 
         with col_nome:
-            nome_alunno_1 = st_autocomplete(
-                label="Nome Alunno",
+            nome_alunno_1 = st.selectbox(
+                "Nome Alunno",
                 options=lista_alunni,
-                key="alunno_1",
+                index=None,
                 placeholder="Scrivi o seleziona un alunno…",
-                on_change=on_alunno_change
+                key="alunno_1",
+                on_change=autocompila_da_alunno
             )
 
         with col_piu:
@@ -423,21 +429,6 @@ if check_password():
                     st.rerun()
 
         st.write("---")
-
-        # ===============================
-        # CICLO FIGLI EXTRA
-        # ===============================
-        for i in range(2, st.session_state["num_figli"] + 1):
-            nome_figlio = st_autocomplete(
-                label=f"Nome Alunno {i}",
-                options=lista_alunni,
-                key=f"alunno_{i}",
-                placeholder="Scrivi o seleziona un alunno…"
-            )
-
-            if nome_figlio:
-                nomi_figli_extra.append(nome_figlio.strip())
-
 
         # --- Autocompilazione dati genitore in base all'alunno ---
         if selezione_alunno:
