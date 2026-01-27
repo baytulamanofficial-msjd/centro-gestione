@@ -148,21 +148,29 @@ def salva_dati():
         colonne_mesi_idx = [headers.index(mese) + 1 for mese in mesi_da_scrivere]
 
         if idx_riga_esistente:
-            # Alunno esistente → aggiorno valori e colori
-            riga_attuale = sheet.row_values(idx_riga_esistente)
-            date_pagamenti = set()
+            # 🔍 Trovo il colore dell'ultimo blocco pagato
+            ultimo_colore = None
 
-            for cella in riga_attuale:
-                if "|" in cella:
-                    try:
-                        parti = cella.split("|")
-                        data = parti[1].strip()
-                        date_pagamenti.add(data)
-                    except:
-                        pass
+            for col_idx in range(len(headers)):
+                cella_a1 = gspread.utils.rowcol_to_a1(idx_riga_esistente, col_idx + 1)
+                try:
+                    fmt = sheet.get_note(cella_a1)  # forza accesso
+                    cell = sheet.cell(idx_riga_esistente, col_idx + 1)
+                    if cell.value and "|" in cell.value:
+                        ultimo_colore = cell_a1  # segna che esiste almeno un pagamento
+                except:
+                    pass
 
-            numero_pagamenti = len(date_pagamenti)
-            colore = COLOR1 if numero_pagamenti % 2 == 0 else COLOR2
+            # 🔁 Alternanza colori
+            if ultimo_colore is None:
+                colore = COLOR1
+            else:
+                # conta quante celle già pagate
+                pagate = sum(
+                    1 for c in sheet.row_values(idx_riga_esistente)
+                    if isinstance(c, str) and "|" in c
+                )
+                colore = COLOR1 if pagate % 2 == 0 else COLOR2
 
             # Scrittura in blocco
             aggiornamenti = []
