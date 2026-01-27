@@ -525,8 +525,11 @@ if check_password():
         # Filtra solo se c'è un alunno selezionato
         mesi_non_pagati = lista_mesi.copy()
 
+        # --- PRIMO ALUNNO: lo prendiamo da session_state ---
+        nome_alunno_1 = st.session_state.get("alunno_1", "").strip()
+
         if nome_alunno_1:
-            df_alunno = df_db[df_db["Nome Alunno"].str.strip().str.lower() == nome_alunno_1.strip().lower()]
+            df_alunno = df_db[df_db["Nome Alunno"].str.strip().str.lower() == nome_alunno_1.lower()]
 
             if not df_alunno.empty:
                 riga = df_alunno.iloc[0]  # prendo la prima corrispondenza
