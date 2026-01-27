@@ -294,369 +294,369 @@ if check_password():
     def get_str_state(key):
         return str(st.session_state.get(key) or "").strip()
 
-    # --- REGISTRAZIONE ---
-    elif st.session_state.get("pagina") == "registro":
+        # --- REGISTRAZIONE ---
+        elif st.session_state.get("pagina") == "registro":
 
-        # ⛔ BLOCCO ANTI-LETTURA DURANTE SALVATAGGIO
-        if st.session_state.get("in_salvataggio"):
-            st.stop()
-    
-        if st.button("⬅️ Torna al Menu"):
-            st.session_state["num_figli"] = 1
-            st.session_state["pagina"] = "menu"
-            st.rerun()
-
-        st.title("Gestione Pagamento")
-
-        try:
-            # ✅ LETTURA UNA SOLA VOLTA (cache)
-            if "db_cache" not in st.session_state:
-                sheet = get_sheet()
-                st.session_state["db_cache"] = sheet.get_all_values()
-            else:
-                sheet = get_sheet()  # solo riferimento
-
-            all_values = st.session_state["db_cache"]
-
-            lista_mesi = [
-                "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
-                "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"
-            ]
-
-            # DataFrame dai dati in cache
-            if len(all_values) >= 2:
-                headers = all_values[1]
-                rows = all_values[2:]
-                df_db = pd.DataFrame(rows, columns=headers)
-
-                # 🔹 Inizializzazione selezione alunno
-                selezione_alunno = st.session_state.get("alunno_1", "")
-
-                mesi_non_pagati = []
-
-                if selezione_alunno:
-                    df_alunno = df_db[df_db["Nome Alunno"].str.strip().str.lower() == selezione_alunno.strip().lower()]
-                    if not df_alunno.empty:
-                        riga = df_alunno.iloc[0]
-                        for mese in lista_mesi:
-                            val = str(riga.get(mese, "")).strip()
-                            if not val:
-                                mesi_non_pagati.append(mese)
-            else:
-                st.warning("Database vuoto o incompleto")
+            # ⛔ BLOCCO ANTI-LETTURA DURANTE SALVATAGGIO
+            if st.session_state.get("in_salvataggio"):
                 st.stop()
+    
+            if st.button("⬅️ Torna al Menu"):
+                st.session_state["num_figli"] = 1
+                st.session_state["pagina"] = "menu"
+                st.rerun()
 
-        except Exception as e:
-            st.error(f"Errore nel caricamento del foglio: {e}")
-            st.stop()
-
-        # ===== 2️⃣ DATAFRAME =====
-        df_db = pd.DataFrame(rows, columns=headers)
-
-        lista_alunni = sorted(df_db["Nome Alunno"].dropna().unique().tolist())
-        lista_genitori = sorted(df_db["Nome Genitore"].dropna().unique().tolist())
-        lista_email = sorted(df_db["Email"].dropna().unique().tolist())
-        lista_telefono = sorted(df_db["Telefono"].dropna().unique().tolist())
-
-        # ===== 3️⃣ AUTOCOMPILAZIONE =====
-        dati_alunni = {r["Nome Alunno"].strip(): {
-                        "Nome Genitore": r.get("Nome Genitore", ""),
-                        "Telefono": r.get("Telefono", ""),
-                        "Email": r.get("Email", "")
-                    } 
-                    for _, r in df_db.iterrows() if r["Nome Alunno"]}
-
-        # ===== FUNZIONE AUTOCOMPILAZIONE =====
-        def autocompila_da_alunno():
-            alunno = st.session_state.get("alunno_1") or ""
-            if not alunno:
-                return
-            dati = dati_alunni.get(alunno, {})
-            st.session_state["genitore"] = dati.get("Nome Genitore", "")
-            st.session_state["telefono"] = dati.get("Telefono", "")
-            st.session_state["email"] = dati.get("Email", "")
-
-        # ===== FUNZIONE DI SICUREZZA (ANTI None.strip) =====
-        def get_str_state(key):
-            return str(st.session_state.get(key) or "").strip()
-
-        # ===== 4️⃣ MAPPA NOME → RIGA =====
-        mappa_righe = {}
-        for idx, r in enumerate(rows, start=3):
-            if len(r) > 1 and r[1]:
-                mappa_righe[r[1].strip().lower()] = idx
-
-        # --- Inizializza session_state per i campi se non esistono ---
-        for key in ["alunno_1", "genitore", "telefono", "email"]:
-            if key not in st.session_state:
-                st.session_state[key] = ""
-
-        if "num_figli" not in st.session_state:
-            st.session_state["num_figli"] = 1
-
-        # --- CREO SELECTBOX DINAMICI PER OGNI FIGLIO ---
-        for i in range(1, st.session_state["num_figli"] + 1):
-            if i == 1:
-                label = "Nome Alunno"
-                key = "alunno_1"
-                on_change = autocompila_da_alunno
-            else:
-                label = f"Nome Alunno {i}"
-                key = f"alunno_{i}_select"
-                if key not in st.session_state:
-                    st.session_state[key] = ""
-                on_change = None
-
-            col_nome, col_piu = st.columns([0.9, 0.1])
-            with col_nome:
-                st.selectbox(
-                    label,
-                    options=lista_alunni,
-                    index=None,
-                    placeholder="Scrivi o seleziona un alunno…",
-                    key=key,
-                    on_change=on_change
-                )
-            with col_piu:
-                if i == 1:
-                    st.write("")
-                    st.write("")
-                    if st.button("➕"):
-                        if st.session_state["num_figli"] < 7:
-                            st.session_state["num_figli"] += 1
-                            st.rerun()
-
-        # --- Autocompilazione dati genitore in base all'alunno principale ---
-        nome_principale = st.session_state.get("alunno_1") or ""
-        if nome_principale:
-            dati = dati_alunni.get(nome_principale, {})
-            st.session_state["genitore"] = dati.get("Nome Genitore", "")
-            st.session_state["telefono"] = dati.get("Telefono", "")
-            st.session_state["email"] = dati.get("Email", "")
-
-        # --- DATI GENITORE (UNA CASELLA PER CAMPO) ---
-        col1, col2 = st.columns(2)
-        with col1:
-            nome_genitore = st.selectbox(
-                "Nome Genitore",
-                options=lista_genitori,
-                index=None,
-                placeholder="Scrivi o seleziona il nome genitore",
-                key="genitore"
-            )
-        with col2:
-            telefono = st.selectbox(
-                "Telefono",
-                options=lista_telefono,
-                index=None,
-                placeholder="Scrivi o seleziona il telefono",
-                key="telefono"
-            )
-
-        col3, col4 = st.columns(2)
-        with col3:
-            email = st.selectbox(
-                "Email",
-                options=lista_email,
-                index=None,
-                placeholder="Scrivi o seleziona l'email",
-                key="email"
-            )
-
-        st.write("---")
-
-        # Filtra solo se c'è un alunno selezionato
-        mesi_non_pagati = lista_mesi.copy()
-
-        # --- PRIMO ALUNNO: lo prendiamo da session_state ---
-        nome_alunno_1 = get_str_state("alunno_1")
-
-        if nome_alunno_1:
-            df_alunno = df_db[df_db["Nome Alunno"].str.strip().str.lower() == nome_alunno_1.lower()]
-
-            if not df_alunno.empty:
-                riga = df_alunno.iloc[0]  # prendo la prima corrispondenza
-
-                for mese in lista_mesi:
-                    val = str(riga.get(mese, "")).strip()  # forza stringa
-                    if val:  # se pagato → rimuovi dai non pagati
-                        if mese in mesi_non_pagati:
-                            mesi_non_pagati.remove(mese)
-
-            # --- Modalità pagamento (reattiva) ---
-            tipo_pagamento = st.radio(
-                "Seleziona modalità pagamento:",
-                ["Un mese", "Più mesi"],
-                horizontal=True
-            )
-
-            # --- Mese / Più mesi (aggiornato con mesi non pagati) ---
-            mese_da, mese_a, mese_singolo = "", "", ""
-            if tipo_pagamento == "Un mese":
-                mese_singolo = st.selectbox("Seleziona il mese:", [""] + mesi_non_pagati)
-            else:
-                st.write("Seleziona l'intervallo di mesi:")
-                col_m1, col_m2 = st.columns(2)
-                with col_m1:
-                    mese_da = st.selectbox("Da mese:", [""] + mesi_non_pagati)
-                with col_m2:
-                    mese_a = st.selectbox("Al mese:", [""] + mesi_non_pagati)
+            st.title("Gestione Pagamento")
 
             try:
-                # --- FORM SOLO PER SALVATAGGIO ---
-                with st.form("modulo_dati_fissi"):
-                    col_imp, col_data = st.columns(2)
-                    with col_imp:
-                        importo = st.number_input("Importo (€):", min_value=0, value=0)
-                    with col_data:
-                        data_pagamento = st.date_input("Data pagamento:", datetime.now())
+                # ✅ LETTURA UNA SOLA VOLTA (cache)
+                if "db_cache" not in st.session_state:
+                    sheet = get_sheet()
+                    st.session_state["db_cache"] = sheet.get_all_values()
+                else:
+                    sheet = get_sheet()  # solo riferimento
 
-                    responsabile = st.text_input("Responsabile:", value="Sheikh Mahdy Hasan")
-                    submit = st.form_submit_button("Salva Tutti")
+                all_values = st.session_state["db_cache"]
 
-                # ===== COSTRUISCO LISTA COMPLETA ALUNNI =====
-                nomi_alunni = []
+                lista_mesi = [
+                    "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
+                    "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"
+                ]
 
-                # Primo alunno
-                if nome_alunno_1:
-                    nomi_alunni.append(nome_alunno_1.strip())
+                # DataFrame dai dati in cache
+                if len(all_values) >= 2:
+                    headers = all_values[1]
+                    rows = all_values[2:]
+                    df_db = pd.DataFrame(rows, columns=headers)
 
-                # Altri figli aggiunti con "+"
-                for i in range(2, st.session_state["num_figli"] + 1):
-                    nome_extra = st.session_state.get(f"alunno_{i}", "").strip()
-                    if nome_extra:
-                        nomi_alunni.append(nome_extra)
+                    # 🔹 Inizializzazione selezione alunno
+                    selezione_alunno = st.session_state.get("alunno_1", "")
 
+                    mesi_non_pagati = []
 
-                # Altri figli (selectbox)
-                for i in range(2, st.session_state["num_figli"] + 1):
-                    nome_extra = st.session_state.get(f"alunno_{i}_select", "").strip()
-                    if nome_extra:
-                        nomi_alunni.append(nome_extra)
-
-                if submit:
-                    # --- controlli errori ---
-                    errori = []
-                    if not nomi_alunni:
-                        errori.append("Nome Alunno")
-                    if not nome_genitore:
-                        errori.append("Nome Genitore")
-                    if not email:
-                        errori.append("Email")
-                    if importo <= 0:
-                        errori.append("Importo")
-                    if tipo_pagamento == "Un mese" and not mese_singolo:
-                        errori.append("Mese")
-                    if tipo_pagamento == "Più mesi" and (not mese_da or not mese_a):
-                        errori.append("Mesi (Da/A)")
-
-                    if errori:
-                        st.error(f"⚠️ Campi mancanti: {', '.join(errori)}")
-                    else:
-                        # --- CARICO I DATI NELLO STATO PER IL POPUP ---
-                        st.session_state["payload_salvataggio"] = {
-                            "nomi_alunni": nomi_alunni,
-                            "nome_genitore": nome_genitore,
-                            "telefono": telefono,
-                            "email": email,
-                            "importo": importo,
-                            "data_pagamento": data_pagamento,
-                            "responsabile": responsabile,
-                            "tipo_pagamento": tipo_pagamento,
-                            "mese_singolo": mese_singolo,
-                            "mese_da": mese_da,
-                            "mese_a": mese_a,
-                            "lista_mesi": lista_mesi,
-                            "sheet": sheet,
-                            "headers": headers,
-                            "mappa_righe": mappa_righe
-                        }
-                        st.session_state["conferma"] = True
-                        st.rerun()
+                    if selezione_alunno:
+                        df_alunno = df_db[df_db["Nome Alunno"].str.strip().str.lower() == selezione_alunno.strip().lower()]
+                        if not df_alunno.empty:
+                            riga = df_alunno.iloc[0]
+                            for mese in lista_mesi:
+                                val = str(riga.get(mese, "")).strip()
+                                if not val:
+                                    mesi_non_pagati.append(mese)
+                else:
+                    st.warning("Database vuoto o incompleto")
+                    st.stop()
 
             except Exception as e:
-                st.error(f"Errore: {e}")  # <-- chiude il try
-            
-            # ===== POPUP DI CONFERMA =====
-            if st.session_state.get("conferma", False):
+                st.error(f"Errore nel caricamento del foglio: {e}")
+                st.stop()
 
-                dati = st.session_state["payload_salvataggio"]
+            # ===== 2️⃣ DATAFRAME =====
+            df_db = pd.DataFrame(rows, columns=headers)
 
-                st.markdown("## 🔒 Conferma dati")
-                st.info("Controlli attentamente i dati prima di procedere")
+            lista_alunni = sorted(df_db["Nome Alunno"].dropna().unique().tolist())
+            lista_genitori = sorted(df_db["Nome Genitore"].dropna().unique().tolist())
+            lista_email = sorted(df_db["Email"].dropna().unique().tolist())
+            lista_telefono = sorted(df_db["Telefono"].dropna().unique().tolist())
 
-                st.markdown("### 👤 Alunno/i")
-                for nome in dati["nomi_alunni"]:
-                    st.write(f"- {nome}")
+            # ===== 3️⃣ AUTOCOMPILAZIONE =====
+            dati_alunni = {r["Nome Alunno"].strip(): {
+                            "Nome Genitore": r.get("Nome Genitore", ""),
+                            "Telefono": r.get("Telefono", ""),
+                            "Email": r.get("Email", "")
+                        } 
+                        for _, r in df_db.iterrows() if r["Nome Alunno"]}
 
-                st.markdown(f"**Genitore:** {dati['nome_genitore']}")
-                st.markdown(f"**Importo:** € {dati['importo']}")
-                if dati["tipo_pagamento"] == "Un mese":
-                    periodo = dati["mese_singolo"]
+            # ===== FUNZIONE AUTOCOMPILAZIONE =====
+            def autocompila_da_alunno():
+                alunno = st.session_state.get("alunno_1") or ""
+                if not alunno:
+                    return
+                dati = dati_alunni.get(alunno, {})
+                st.session_state["genitore"] = dati.get("Nome Genitore", "")
+                st.session_state["telefono"] = dati.get("Telefono", "")
+                st.session_state["email"] = dati.get("Email", "")
+
+            # ===== FUNZIONE DI SICUREZZA (ANTI None.strip) =====
+            def get_str_state(key):
+                return str(st.session_state.get(key) or "").strip()
+
+            # ===== 4️⃣ MAPPA NOME → RIGA =====
+            mappa_righe = {}
+            for idx, r in enumerate(rows, start=3):
+                if len(r) > 1 and r[1]:
+                    mappa_righe[r[1].strip().lower()] = idx
+
+            # --- Inizializza session_state per i campi se non esistono ---
+            for key in ["alunno_1", "genitore", "telefono", "email"]:
+                if key not in st.session_state:
+                    st.session_state[key] = ""
+
+            if "num_figli" not in st.session_state:
+                st.session_state["num_figli"] = 1
+
+            # --- CREO SELECTBOX DINAMICI PER OGNI FIGLIO ---
+            for i in range(1, st.session_state["num_figli"] + 1):
+                if i == 1:
+                    label = "Nome Alunno"
+                    key = "alunno_1"
+                    on_change = autocompila_da_alunno
                 else:
-                    periodo = f"{dati['mese_da']} - {dati['mese_a']}"
-                st.markdown(f"**Periodo:** {periodo}")
-                st.markdown(f"**Email:** {dati['email']}")
+                    label = f"Nome Alunno {i}"
+                    key = f"alunno_{i}_select"
+                    if key not in st.session_state:
+                        st.session_state[key] = ""
+                    on_change = None
 
-                st.markdown("---")
-                st.markdown("### ❓ Vuole confermare i dati?")
+                col_nome, col_piu = st.columns([0.9, 0.1])
+                with col_nome:
+                    st.selectbox(
+                        label,
+                        options=lista_alunni,
+                        index=None,
+                        placeholder="Scrivi o seleziona un alunno…",
+                        key=key,
+                        on_change=on_change
+                    )
+                with col_piu:
+                    if i == 1:
+                        st.write("")
+                        st.write("")
+                        if st.button("➕"):
+                            if st.session_state["num_figli"] < 7:
+                                st.session_state["num_figli"] += 1
+                                st.rerun()
 
-                col1, col2 = st.columns(2)
+            # --- Autocompilazione dati genitore in base all'alunno principale ---
+            nome_principale = st.session_state.get("alunno_1") or ""
+            if nome_principale:
+                dati = dati_alunni.get(nome_principale, {})
+                st.session_state["genitore"] = dati.get("Nome Genitore", "")
+                st.session_state["telefono"] = dati.get("Telefono", "")
+                st.session_state["email"] = dati.get("Email", "")
 
-                with col1:
-                    if st.button("✏️ Modifico"):
-                        st.session_state["conferma"] = False
-                        st.rerun()
+            # --- DATI GENITORE (UNA CASELLA PER CAMPO) ---
+            col1, col2 = st.columns(2)
+            with col1:
+                nome_genitore = st.selectbox(
+                    "Nome Genitore",
+                    options=lista_genitori,
+                    index=None,
+                    placeholder="Scrivi o seleziona il nome genitore",
+                    key="genitore"
+                )
+            with col2:
+                telefono = st.selectbox(
+                    "Telefono",
+                    options=lista_telefono,
+                    index=None,
+                    placeholder="Scrivi o seleziona il telefono",
+                    key="telefono"
+                )
 
-                with col2:
-                    if st.button("✅ Confermo"):
-                        # ⛔ blocca riletture durante salvataggio
-                        st.session_state["in_salvataggio"] = True
-                        st.session_state["conferma"] = False
-                        st.session_state["num_figli"] = 1
+            col3, col4 = st.columns(2)
+            with col3:
+                email = st.selectbox(
+                    "Email",
+                    options=lista_email,
+                    index=None,
+                    placeholder="Scrivi o seleziona l'email",
+                    key="email"
+                )
 
-                        # ✅ SOLO scrittura su Google Sheet
-                        salva_dati()
+            st.write("---")
 
-                        # 📧 INVIO RICEVUTE VIA MAIL
-                        dati = st.session_state["payload_salvataggio"]
-                        nomi_alunni = dati["nomi_alunni"]
-                        nome_genitore = dati["nome_genitore"]
-                        email_destinatario = dati["email"]
-                        importo = dati["importo"]
-                        responsabile = dati["responsabile"]
+            # Filtra solo se c'è un alunno selezionato
+            mesi_non_pagati = lista_mesi.copy()
 
-                        if dati["tipo_pagamento"] == "Un mese":
-                            mesi_pagati = dati["mese_singolo"]
+            # --- PRIMO ALUNNO: lo prendiamo da session_state ---
+            nome_alunno_1 = get_str_state("alunno_1")
+
+            if nome_alunno_1:
+                df_alunno = df_db[df_db["Nome Alunno"].str.strip().str.lower() == nome_alunno_1.lower()]
+
+                if not df_alunno.empty:
+                    riga = df_alunno.iloc[0]  # prendo la prima corrispondenza
+
+                    for mese in lista_mesi:
+                        val = str(riga.get(mese, "")).strip()  # forza stringa
+                        if val:  # se pagato → rimuovi dai non pagati
+                            if mese in mesi_non_pagati:
+                                mesi_non_pagati.remove(mese)
+
+                # --- Modalità pagamento (reattiva) ---
+                tipo_pagamento = st.radio(
+                    "Seleziona modalità pagamento:",
+                    ["Un mese", "Più mesi"],
+                    horizontal=True
+                )
+
+                # --- Mese / Più mesi (aggiornato con mesi non pagati) ---
+                mese_da, mese_a, mese_singolo = "", "", ""
+                if tipo_pagamento == "Un mese":
+                    mese_singolo = st.selectbox("Seleziona il mese:", [""] + mesi_non_pagati)
+                else:
+                    st.write("Seleziona l'intervallo di mesi:")
+                    col_m1, col_m2 = st.columns(2)
+                    with col_m1:
+                        mese_da = st.selectbox("Da mese:", [""] + mesi_non_pagati)
+                    with col_m2:
+                        mese_a = st.selectbox("Al mese:", [""] + mesi_non_pagati)
+
+                try:
+                    # --- FORM SOLO PER SALVATAGGIO ---
+                    with st.form("modulo_dati_fissi"):
+                        col_imp, col_data = st.columns(2)
+                        with col_imp:
+                            importo = st.number_input("Importo (€):", min_value=0, value=0)
+                        with col_data:
+                            data_pagamento = st.date_input("Data pagamento:", datetime.now())
+
+                        responsabile = st.text_input("Responsabile:", value="Sheikh Mahdy Hasan")
+                        submit = st.form_submit_button("Salva Tutti")
+
+                    # ===== COSTRUISCO LISTA COMPLETA ALUNNI =====
+                    nomi_alunni = []
+
+                    # Primo alunno
+                    if nome_alunno_1:
+                        nomi_alunni.append(nome_alunno_1.strip())
+
+                    # Altri figli aggiunti con "+"
+                    for i in range(2, st.session_state["num_figli"] + 1):
+                        nome_extra = st.session_state.get(f"alunno_{i}", "").strip()
+                        if nome_extra:
+                            nomi_alunni.append(nome_extra)
+
+
+                    # Altri figli (selectbox)
+                    for i in range(2, st.session_state["num_figli"] + 1):
+                        nome_extra = st.session_state.get(f"alunno_{i}_select", "").strip()
+                        if nome_extra:
+                            nomi_alunni.append(nome_extra)
+
+                    if submit:
+                        # --- controlli errori ---
+                        errori = []
+                        if not nomi_alunni:
+                            errori.append("Nome Alunno")
+                        if not nome_genitore:
+                            errori.append("Nome Genitore")
+                        if not email:
+                            errori.append("Email")
+                        if importo <= 0:
+                            errori.append("Importo")
+                        if tipo_pagamento == "Un mese" and not mese_singolo:
+                            errori.append("Mese")
+                        if tipo_pagamento == "Più mesi" and (not mese_da or not mese_a):
+                            errori.append("Mesi (Da/A)")
+
+                        if errori:
+                            st.error(f"⚠️ Campi mancanti: {', '.join(errori)}")
                         else:
-                            mesi_pagati = f"{dati['mese_da']} - {dati['mese_a']}"
+                            # --- CARICO I DATI NELLO STATO PER IL POPUP ---
+                            st.session_state["payload_salvataggio"] = {
+                                "nomi_alunni": nomi_alunni,
+                                "nome_genitore": nome_genitore,
+                                "telefono": telefono,
+                                "email": email,
+                                "importo": importo,
+                                "data_pagamento": data_pagamento,
+                                "responsabile": responsabile,
+                                "tipo_pagamento": tipo_pagamento,
+                                "mese_singolo": mese_singolo,
+                                "mese_da": mese_da,
+                                "mese_a": mese_a,
+                                "lista_mesi": lista_mesi,
+                                "sheet": sheet,
+                                "headers": headers,
+                                "mappa_righe": mappa_righe
+                            }
+                            st.session_state["conferma"] = True
+                            st.rerun()
 
-                        if not st.session_state.get("mail_inviata", False):
-                            for nome_alunno in nomi_alunni:
-                                try:
-                                    invia_ricevuta_email(
-                                        email_destinatario=email_destinatario,
-                                        nome_genitore=nome_genitore,
-                                        nome_alunno=nome_alunno,
-                                        importo=importo,
-                                        mesi_pagati=mesi_pagati,
-                                        responsabile=responsabile
-                                    )
-                                except Exception as e:
-                                    st.error(f"Errore invio mail per {nome_alunno}: {e}")
+                except Exception as e:
+                    st.error(f"Errore: {e}")  # <-- chiude il try
 
-                            st.session_state["mail_inviata"] = True
-                            st.success("📧 Ricevuta inviata via email")
+                # ===== POPUP DI CONFERMA =====
+                if st.session_state.get("conferma", False):
 
-                        # 🔄 invalida cache DOPO tutto
-                        st.session_state.pop("db_cache", None)
+                    dati = st.session_state["payload_salvataggio"]
 
-                        st.success("✅ Dati salvati correttamente")
-                        st.balloons()
+                    st.markdown("## 🔒 Conferma dati")
+                    st.info("Controlli attentamente i dati prima di procedere")
 
-                        # 🔓 sblocca e rerun UNA SOLA VOLTA
-                        st.session_state["in_salvataggio"] = False
-                        st.rerun()
+                    st.markdown("### 👤 Alunno/i")
+                    for nome in dati["nomi_alunni"]:
+                        st.write(f"- {nome}")
+
+                    st.markdown(f"**Genitore:** {dati['nome_genitore']}")
+                    st.markdown(f"**Importo:** € {dati['importo']}")
+                    if dati["tipo_pagamento"] == "Un mese":
+                        periodo = dati["mese_singolo"]
+                    else:
+                        periodo = f"{dati['mese_da']} - {dati['mese_a']}"
+                    st.markdown(f"**Periodo:** {periodo}")
+                    st.markdown(f"**Email:** {dati['email']}")
+
+                    st.markdown("---")
+                    st.markdown("### ❓ Vuole confermare i dati?")
+
+                    col1, col2 = st.columns(2)
+
+                    with col1:
+                        if st.button("✏️ Modifico"):
+                            st.session_state["conferma"] = False
+                            st.rerun()
+
+                    with col2:
+                        if st.button("✅ Confermo"):
+                            # ⛔ blocca riletture durante salvataggio
+                            st.session_state["in_salvataggio"] = True
+                            st.session_state["conferma"] = False
+                            st.session_state["num_figli"] = 1
+
+                            # ✅ SOLO scrittura su Google Sheet
+                            salva_dati()
+
+                            # 📧 INVIO RICEVUTE VIA MAIL
+                            dati = st.session_state["payload_salvataggio"]
+                                nomi_alunni = dati["nomi_alunni"]
+                            nome_genitore = dati["nome_genitore"]
+                            email_destinatario = dati["email"]
+                            importo = dati["importo"]
+                            responsabile = dati["responsabile"]
+
+                            if dati["tipo_pagamento"] == "Un mese":
+                                mesi_pagati = dati["mese_singolo"]
+                            else:
+                                mesi_pagati = f"{dati['mese_da']} - {dati['mese_a']}"
+
+                            if not st.session_state.get("mail_inviata", False):
+                                for nome_alunno in nomi_alunni:
+                                    try:
+                                        invia_ricevuta_email(
+                                            email_destinatario=email_destinatario,
+                                            nome_genitore=nome_genitore,
+                                            nome_alunno=nome_alunno,
+                                            importo=importo,
+                                            mesi_pagati=mesi_pagati,
+                                            responsabile=responsabile
+                                        )
+                                    except Exception as e:
+                                        st.error(f"Errore invio mail per {nome_alunno}: {e}")
+
+                                st.session_state["mail_inviata"] = True
+                                st.success("📧 Ricevuta inviata via email")
+
+                            # 🔄 invalida cache DOPO tutto
+                            st.session_state.pop("db_cache", None)
+
+                            st.success("✅ Dati salvati correttamente")
+                            st.balloons()
+
+                            # 🔓 sblocca e rerun UNA SOLA VOLTA
+                            st.session_state["in_salvataggio"] = False
+                            st.rerun()
 
     # --- VISUALIZZAZIONE ---
     if st.session_state.get("pagina") == "visualizza":
