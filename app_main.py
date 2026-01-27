@@ -297,7 +297,7 @@ if check_password():
         # --- REGISTRAZIONE ---
         if st.session_state.get("pagina") == "menu":
             pass
-            
+
         elif st.session_state.get("pagina") == "registro":
 
             # ⛔ BLOCCO ANTI-LETTURA DURANTE SALVATAGGIO
@@ -623,7 +623,7 @@ if check_password():
 
                             # 📧 INVIO RICEVUTE VIA MAIL
                             dati = st.session_state["payload_salvataggio"]
-                                nomi_alunni = dati["nomi_alunni"]
+                            nomi_alunni = dati["nomi_alunni"]
                             nome_genitore = dati["nome_genitore"]
                             email_destinatario = dati["email"]
                             importo = dati["importo"]
