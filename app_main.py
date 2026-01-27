@@ -457,45 +457,6 @@ if check_password():
 
         st.write("---")
 
-        # --- Autocompletamento bidirezionale ---
-        #def aggiorna_session_state(alunno=None, genitore=None, email=None, telefono=None):
-            #if alunno:
-                #dati = dati_alunni.get(alunno, {})
-                #st.session_state["genitore_select"] = dati.get("Nome Genitore", "")
-                #st.session_state["telefono_select"] = dati.get("Telefono", "")
-                #st.session_state["email_select"] = dati.get("Email", "")
-            #elif genitore:
-                #for al, d in dati_alunni.items():
-                    #if d["Nome Genitore"] == genitore:
-                        #st.session_state["alunno_1_select"] = al  # <- punta al campo principale con + 
-                        #st.session_state["telefono_select"] = d.get("Telefono", "")
-                        #st.session_state["email_select"] = d.get("Email", "")
-                        #break
-            #elif email:
-                #for al, d in dati_alunni.items():
-                    #if d["Email"] == email:
-                        #st.session_state["alunno_1_select"] = al
-                        #st.session_state["genitore_select"] = d.get("Nome Genitore", "")
-                        #st.session_state["telefono_select"] = d.get("Telefono", "")
-                        #break
-            #elif telefono:
-                #for al, d in dati_alunni.items():
-                    #if d["Telefono"] == telefono:
-                        #st.session_state["alunno_1_select"] = al
-                        #st.session_state["genitore_select"] = d.get("Nome Genitore", "")
-                        #st.session_state["email_select"] = d.get("Email", "")
-                        #break
-
-        # DISATTIVATO: causava modifica session_state dopo i widget
-        # if selezione_alunno:
-        #   aggiorna_session_state(alunno=selezione_alunno)
-        # elif st.session_state.get("genitore_select"):
-        #   aggiorna_session_state(genitore=st.session_state["genitore_select"])
-        # elif st.session_state.get("email_select"):
-        #   aggiorna_session_state(email=st.session_state["email_select"])
-        # elif st.session_state.get("telefono_select"):
-        #   aggiorna_session_state(telefono=st.session_state["telefono_select"])
-
         # Filtra solo se c'è un alunno selezionato
         mesi_non_pagati = lista_mesi.copy()
 
