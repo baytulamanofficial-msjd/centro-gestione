@@ -321,13 +321,11 @@ if check_password():
 
         try:
             # ✅ LETTURA UNA SOLA VOLTA (cache)
-            if "sheet" not in st.session_state:
-                st.session_state["sheet"] = get_sheet()
-
-            sheet = st.session_state["sheet"]
-
             if "db_cache" not in st.session_state:
+                sheet = get_sheet()
                 st.session_state["db_cache"] = sheet.get_all_values()
+            else:
+                sheet = get_sheet()  # solo riferimento
 
             all_values = st.session_state["db_cache"]
 
@@ -682,7 +680,7 @@ if check_password():
 
         st.title("Database")
         try:
-            sheet = st.session_state["sheet"]
+            sheet = get_sheet()
 
             # ✅ LETTURA UNA SOLA VOLTA
             if "db_cache" not in st.session_state:
