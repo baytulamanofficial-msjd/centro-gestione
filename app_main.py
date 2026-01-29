@@ -682,7 +682,7 @@ if check_password():
 
         st.title("Database")
         try:
-            sheet = get_sheet()
+            sheet = st.session_state["sheet"]
 
             # ✅ LETTURA UNA SOLA VOLTA
             if "db_cache" not in st.session_state:
