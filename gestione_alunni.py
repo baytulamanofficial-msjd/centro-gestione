@@ -164,7 +164,7 @@ def elimina_alunno():
         headers = all_values[1]
         rows = all_values[2:]  # dalla riga 3 in poi
 
-        # Mappa nome -> dati
+        # Lista alunni e dati mappati
         lista_alunni = [r[headers.index("Nome Alunno")].strip() for r in rows if r[headers.index("Nome Alunno")].strip()]
         dati_alunni = {
             r[headers.index("Nome Alunno")].strip(): {
@@ -191,7 +191,6 @@ def elimina_alunno():
         st.text_input("Email", value=dati.get("Email", ""), disabled=True)
 
         if st.button("Elimina"):
-            # Salva i dati per il popup di conferma
             st.session_state["alunno_da_eliminare_dati"] = dati
             st.session_state["conferma_eliminazione"] = True
             st.rerun()
@@ -213,12 +212,12 @@ def elimina_alunno():
         with col1:
             if st.button("Modifico!"):
                 st.session_state["conferma_eliminazione"] = False
+                st.session_state.pop("alunno_da_eliminare_dati", None)
                 st.rerun()
 
         with col2:
             if st.button("Confermo Eliminazione!"):
                 try:
-                    # Cancella la riga direttamente su Google Sheet
                     riga_da_eliminare = dati.get("Riga")
                     if riga_da_eliminare:
                         sheet.delete_rows(riga_da_eliminare)
@@ -227,11 +226,10 @@ def elimina_alunno():
                     else:
                         st.error("Errore: riga alunno non trovata")
 
-                    # Reset stato
+                    # reset stati senza toccare direttamente il widget
                     st.session_state["conferma_eliminazione"] = False
                     st.session_state.pop("alunno_da_eliminare_dati", None)
-                    st.session_state["alunno_da_eliminare"] = ""
-                    st.rerun()
+                    st.experimental_rerun()  # ricarica tutto da capo pulito
 
                 except Exception as e:
                     st.error(f"Errore eliminazione su Google Sheet: {e}")
