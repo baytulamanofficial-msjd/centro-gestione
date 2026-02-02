@@ -14,12 +14,20 @@ def registra_alunno():
         st.session_state["pagina"] = "menu"
         st.rerun()
 
+    # --- RESET CAMPPI SE FLAG ---
+    if st.session_state.get("reset_form", False):
+        st.session_state["Nome Alunno"] = ""
+        st.session_state["Nome Genitore"] = ""
+        st.session_state["Telefono"] = ""
+        st.session_state["Email"] = ""
+        st.session_state["reset_form"] = False
+
     # --- Form per inserire dati ---
     with st.form("form_nuovo_alunno"):
-        nome_alunno = st.text_input("Nome Alunno", value=st.session_state.get("Nome Alunno", ""))
-        nome_genitore = st.text_input("Nome Genitore", value=st.session_state.get("Nome Genitore", ""))
-        telefono = st.text_input("Telefono", value=st.session_state.get("Telefono", ""))
-        email = st.text_input("Email", value=st.session_state.get("Email", ""))
+        nome_alunno = st.text_input("Nome Alunno", value=st.session_state.get("Nome Alunno", ""), key="Nome Alunno")
+        nome_genitore = st.text_input("Nome Genitore", value=st.session_state.get("Nome Genitore", ""), key="Nome Genitore")
+        telefono = st.text_input("Telefono", value=st.session_state.get("Telefono", ""), key="Telefono")
+        email = st.text_input("Email", value=st.session_state.get("Email", ""), key="Email")
         submit = st.form_submit_button("Salva")
 
     if submit:
@@ -45,7 +53,7 @@ def registra_alunno():
                 "Email": email.strip()
             }
             st.session_state["conferma_nuovo_alunno"] = True
-            st.rerun()
+            st.experimental_rerun()
 
     # --- Popup di conferma ---
     if st.session_state.get("conferma_nuovo_alunno", False):
@@ -64,7 +72,7 @@ def registra_alunno():
         with col1:
             if st.button("Modifico!"):
                 st.session_state["conferma_nuovo_alunno"] = False
-                st.rerun()
+                st.experimental_rerun()
 
         with col2:
             if st.button("Confermo!"):
@@ -89,7 +97,6 @@ def registra_alunno():
                         st.error("Foglio non correttamente inizializzato!")
                         st.stop()
 
-                    # Colonne nella riga 2
                     headers = all_values[1]
                     col_ID = headers.index("ID") + 1
                     col_nome_alunno = headers.index("Nome Alunno") + 1
@@ -97,7 +104,6 @@ def registra_alunno():
                     col_telefono = headers.index("Telefono") + 1
                     col_email = headers.index("Email") + 1
 
-                    # Calcolo nuovo ID
                     righe = all_values[2:]  # dati dalla riga 3
                     ultimo_id = 0
                     for r in righe:
@@ -121,15 +127,10 @@ def registra_alunno():
                     st.success(f"✅ Nuovo alunno registrato con ID {nuovo_id}")
                     st.balloons()
 
-                    # --- Reset stato conferma e campi ---
+                    # --- Flag reset form per il prossimo ciclo ---
+                    st.session_state["reset_form"] = True
                     st.session_state["conferma_nuovo_alunno"] = False
                     st.session_state.pop("nuovo_alunno", None)
-                    st.session_state["Nome Alunno"] = ""
-                    st.session_state["Nome Genitore"] = ""
-                    st.session_state["Telefono"] = ""
-                    st.session_state["Email"] = ""
-
-                    st.rerun()
 
                 except Exception as e:
                     st.error(f"Errore salvataggio su Google Sheet: {e}")
