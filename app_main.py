@@ -420,9 +420,10 @@ if check_password():
 
             col_nome, col_piu = st.columns([0.9, 0.1])
             with col_nome:
-                st.text_input(
+                st.combobox(
                     label,
-                    placeholder="Scrivi il nome dell'alunno (anche nuovo)",
+                    options=lista_alunni,
+                    placeholder="Scrivi o seleziona un alunno…",
                     key=key,
                     on_change=on_change
                 )
@@ -443,32 +444,28 @@ if check_password():
             st.session_state["telefono"] = dati.get("Telefono", "")
             st.session_state["email"] = dati.get("Email", "")
 
-        # --- DATI GENITORE (UNA CASELLA PER CAMPO) ---
+         # --- DATI GENITORE (UNA CASELLA PER CAMPO) ---
         col1, col2 = st.columns(2)
         with col1:
-            nome_genitore = st.selectbox(
+            nome_genitore = st.combobox(
                 "Nome Genitore",
                 options=lista_genitori,
-                index=None,
-                placeholder="Scrivi o seleziona il nome genitore",
+                placeholder="Scriva o selezioni il nome genitore",
                 key="genitore"
             )
         with col2:
-            telefono = st.selectbox(
+            telefono = st.combobox(
                 "Telefono",
                 options=lista_telefono,
-                index=None,
-                placeholder="Scrivi o seleziona il telefono",
+                placeholder="Scriva o selezioni il telefono",
                 key="telefono"
             )
-
         col3, col4 = st.columns(2)
         with col3:
-            email = st.selectbox(
+            email = st.combobox(
                 "Email",
                 options=lista_email,
-                index=None,
-                placeholder="Scrivi o seleziona l'email",
+                placeholder="Scriva o selezioni l'email",
                 key="email"
             )
 
@@ -531,6 +528,11 @@ if check_password():
                     nomi_alunni.append(nome_alunno_1.strip())
 
                 # Altri figli aggiunti con "+"
+                for i in range(2, st.session_state["num_figli"] + 1):
+                    nome_extra = get_str_state(f"alunno_{i}")
+                    if nome_extra:
+                        nomi_alunni.append(nome_extra)
+
                 for i in range(2, st.session_state["num_figli"] + 1):
                     nome_extra = get_str_state(f"alunno_{i}_select")
                     if nome_extra:
