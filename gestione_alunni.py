@@ -49,7 +49,7 @@ def registra_alunno():
                 "Email": email.strip()
             }
             st.session_state["conferma_nuovo_alunno"] = True
-            st.experimental_rerun()
+            st.rerun()
 
     # --- Popup conferma ---
     if st.session_state.get("conferma_nuovo_alunno", False):
@@ -226,3 +226,4 @@ def elimina_alunno():
 
                 except Exception as e:
                     st.error(f"Errore eliminazione su Google Sheet: {e}")
+
