@@ -4,6 +4,7 @@ from google.oauth2.service_account import Credentials
 import pandas as pd
 from datetime import datetime
 from mailer import invia_ricevuta_email
+import gestione_alunni
 
 # Configurazione Pagina
 st.set_page_config(page_title="Baytul Aman Monza", page_icon="📖", layout="wide")
@@ -287,17 +288,32 @@ if check_password():
         st.markdown("<h1 style='text-align: center;'>Baytul Aman Monza</h1>", unsafe_allow_html=True)
         st.markdown("<h3 style='text-align: center;'>Cosa vuole fare oggi?</h3>", unsafe_allow_html=True)
         st.write("---")
+
         col1, col2 = st.columns(2)
         with col1:
             if st.button("📝 Registro un pagamento", use_container_width=True):
                 st.session_state["mail_inviata"] = False
                 st.session_state["pagina"] = "registro"
                 st.rerun()
+            if st.button("➕ Registra Nuovo Alunno", use_container_width=True):
+                st.session_state["pagina"] = "registra_alunno"
+                st.rerun()
+
         with col2:
             if st.button("📊 Visualizzo database", use_container_width=True):
                 st.session_state["pagina"] = "visualizza"
                 st.rerun()
+            if st.button("❌ Elimina Alunno Esistente", use_container_width=True):
+                st.session_state["pagina"] = "elimina_alunno"
+                st.rerun()
 
+    # --- GESTIONE DELLE NUOVE PAGINE ---
+    pagina = st.session_state.get("pagina", "menu")
+
+    if pagina == "registra_alunno":
+        gestione_alunni.registra_alunno()  # funzione nel nuovo file
+    elif pagina == "elimina_alunno":
+        gestione_alunni.elimina_alunno()  # funzione nel nuovo file
 
     def get_str_state(key):
         return str(st.session_state.get(key) or "").strip()
