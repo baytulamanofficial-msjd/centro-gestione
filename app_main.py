@@ -420,11 +420,9 @@ if check_password():
 
             col_nome, col_piu = st.columns([0.9, 0.1])
             with col_nome:
-                st.selectbox(
+                st.text_input(
                     label,
-                    options=lista_alunni,
-                    index=None,
-                    placeholder="Scrivi o seleziona un alunno…",
+                    placeholder="Scrivi il nome dell'alunno (anche nuovo)",
                     key=key,
                     on_change=on_change
                 )
@@ -533,11 +531,6 @@ if check_password():
                     nomi_alunni.append(nome_alunno_1.strip())
 
                 # Altri figli aggiunti con "+"
-                for i in range(2, st.session_state["num_figli"] + 1):
-                    nome_extra = get_str_state(f"alunno_{i}")
-                    if nome_extra:
-                        nomi_alunni.append(nome_extra)
-
                 for i in range(2, st.session_state["num_figli"] + 1):
                     nome_extra = get_str_state(f"alunno_{i}_select")
                     if nome_extra:
