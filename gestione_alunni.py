@@ -229,7 +229,7 @@ def elimina_alunno():
                     # reset stati senza toccare direttamente il widget
                     st.session_state["conferma_eliminazione"] = False
                     st.session_state.pop("alunno_da_eliminare_dati", None)
-                    st.experimental_rerun()  # ricarica tutto da capo pulito
+                    st.rerun()  # ricarica tutto da capo pulito
 
                 except Exception as e:
                     st.error(f"Errore eliminazione su Google Sheet: {e}")
