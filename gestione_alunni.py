@@ -59,6 +59,8 @@ def registra_alunno():
         st.markdown(f"**Telefono:** {dati.get('Telefono')}")
         st.markdown(f"**Email:** {dati.get('Email')}")
 
+        st.rerun()  # ricarica tutto da capo pulito
+
         col1, col2 = st.columns(2)
 
         with col1:
@@ -120,6 +122,7 @@ def registra_alunno():
 
                     st.success(f"✅ Nuovo alunno registrato con ID {nuovo_id}")
                     st.balloons()
+                    st.rerun()  # ricarica tutto da capo pulito
 
                     # reset stato conferma
                     st.session_state["conferma_nuovo_alunno"] = False
@@ -233,6 +236,3 @@ def elimina_alunno():
 
                 except Exception as e:
                     st.error(f"Errore eliminazione su Google Sheet: {e}")
-
-
-
