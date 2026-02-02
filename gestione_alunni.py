@@ -226,5 +226,3 @@ def elimina_alunno():
 
                 except Exception as e:
                     st.error(f"Errore eliminazione su Google Sheet: {e}")
-
-
