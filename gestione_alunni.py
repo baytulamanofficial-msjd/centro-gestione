@@ -14,12 +14,10 @@ def registra_alunno():
         st.session_state["pagina"] = "menu"
         st.rerun()
 
-    # --- RESET CAMPPI SE FLAG ---
+    # --- RESET FORM DOPO CONFERMA ---
     if st.session_state.get("reset_form", False):
-        st.session_state["Nome Alunno"] = ""
-        st.session_state["Nome Genitore"] = ""
-        st.session_state["Telefono"] = ""
-        st.session_state["Email"] = ""
+        for key in ["Nome Alunno", "Nome Genitore", "Telefono", "Email"]:
+            st.session_state[key] = ""
         st.session_state["reset_form"] = False
 
     # --- Form per inserire dati ---
@@ -31,7 +29,6 @@ def registra_alunno():
         submit = st.form_submit_button("Salva")
 
     if submit:
-        # --- Controllo campi obbligatori ---
         errori = []
         if not nome_alunno.strip():
             errori.append("Nome Alunno")
@@ -45,7 +42,6 @@ def registra_alunno():
         if errori:
             st.error(f"⚠️ Campi mancanti: {', '.join(errori)}")
         else:
-            # Salviamo i dati nello stato per il popup di conferma
             st.session_state["nuovo_alunno"] = {
                 "Nome Alunno": nome_alunno.strip(),
                 "Nome Genitore": nome_genitore.strip(),
@@ -53,9 +49,9 @@ def registra_alunno():
                 "Email": email.strip()
             }
             st.session_state["conferma_nuovo_alunno"] = True
-            st.rerun()
+            st.experimental_rerun()
 
-    # --- Popup di conferma ---
+    # --- Popup conferma ---
     if st.session_state.get("conferma_nuovo_alunno", False):
         dati = st.session_state.get("nuovo_alunno", {})
 
@@ -68,35 +64,26 @@ def registra_alunno():
         st.markdown(f"**Email:** {dati.get('Email')}")
 
         col1, col2 = st.columns(2)
-
         with col1:
             if st.button("Modifico!"):
                 st.session_state["conferma_nuovo_alunno"] = False
                 st.experimental_rerun()
-
         with col2:
             if st.button("Confermo!"):
                 try:
-                    # --- Connetti a Google Sheet ---
-                    scope = [
-                        "https://www.googleapis.com/auth/spreadsheets",
-                        "https://www.googleapis.com/auth/drive"
-                    ]
-                    creds = Credentials.from_service_account_info(
-                        st.secrets["gspread"],
-                        scopes=scope
-                    )
+                    # --- Connessione Google Sheet ---
+                    scope = ["https://www.googleapis.com/auth/spreadsheets","https://www.googleapis.com/auth/drive"]
+                    creds = Credentials.from_service_account_info(st.secrets["gspread"], scopes=scope)
                     client = gspread.authorize(creds)
                     spreadsheet = client.open("Database_pagamenti")
                     anno_corrente = str(datetime.now().year)
                     sheet = spreadsheet.worksheet(anno_corrente)
 
-                    # --- Legge tutte le righe esistenti ---
+                    # --- Legge righe esistenti ---
                     all_values = sheet.get_all_values()
                     if len(all_values) < 2:
                         st.error("Foglio non correttamente inizializzato!")
                         st.stop()
-
                     headers = all_values[1]
                     col_ID = headers.index("ID") + 1
                     col_nome_alunno = headers.index("Nome Alunno") + 1
@@ -104,7 +91,7 @@ def registra_alunno():
                     col_telefono = headers.index("Telefono") + 1
                     col_email = headers.index("Email") + 1
 
-                    righe = all_values[2:]  # dati dalla riga 3
+                    righe = all_values[2:]
                     ultimo_id = 0
                     for r in righe:
                         try:
@@ -113,7 +100,7 @@ def registra_alunno():
                             continue
                     nuovo_id = ultimo_id + 1
 
-                    # --- Nuova riga da appendere ---
+                    # --- Append riga ---
                     nuova_riga = [""] * len(headers)
                     nuova_riga[col_ID - 1] = nuovo_id
                     nuova_riga[col_nome_alunno - 1] = dati["Nome Alunno"]
@@ -121,16 +108,15 @@ def registra_alunno():
                     nuova_riga[col_telefono - 1] = dati["Telefono"]
                     nuova_riga[col_email - 1] = dati["Email"]
 
-                    # Append su Google Sheet
                     sheet.append_row(nuova_riga)
-
                     st.success(f"✅ Nuovo alunno registrato con ID {nuovo_id}")
                     st.balloons()
 
-                    # --- Flag reset form per il prossimo ciclo ---
+                    # --- RESET FORM ---
                     st.session_state["reset_form"] = True
                     st.session_state["conferma_nuovo_alunno"] = False
                     st.session_state.pop("nuovo_alunno", None)
+                    st.experimental_rerun()
 
                 except Exception as e:
                     st.error(f"Errore salvataggio su Google Sheet: {e}")
@@ -240,4 +226,3 @@ def elimina_alunno():
 
                 except Exception as e:
                     st.error(f"Errore eliminazione su Google Sheet: {e}")
-
