@@ -420,9 +420,10 @@ if check_password():
 
             col_nome, col_piu = st.columns([0.9, 0.1])
             with col_nome:
-                st.combobox(
+                st.selectbox(
                     label,
                     options=lista_alunni,
+                    index=None,
                     placeholder="Scrivi o seleziona un alunno…",
                     key=key,
                     on_change=on_change
@@ -444,28 +445,32 @@ if check_password():
             st.session_state["telefono"] = dati.get("Telefono", "")
             st.session_state["email"] = dati.get("Email", "")
 
-         # --- DATI GENITORE (UNA CASELLA PER CAMPO) ---
+        # --- DATI GENITORE (UNA CASELLA PER CAMPO) ---
         col1, col2 = st.columns(2)
         with col1:
-            nome_genitore = st.combobox(
+            nome_genitore = st.selectbox(
                 "Nome Genitore",
                 options=lista_genitori,
-                placeholder="Scriva o selezioni il nome genitore",
+                index=None,
+                placeholder="Scrivi o seleziona il nome genitore",
                 key="genitore"
             )
         with col2:
-            telefono = st.combobox(
+            telefono = st.selectbox(
                 "Telefono",
                 options=lista_telefono,
-                placeholder="Scriva o selezioni il telefono",
+                index=None,
+                placeholder="Scrivi o seleziona il telefono",
                 key="telefono"
             )
+
         col3, col4 = st.columns(2)
         with col3:
-            email = st.combobox(
+            email = st.selectbox(
                 "Email",
                 options=lista_email,
-                placeholder="Scriva o selezioni l'email",
+                index=None,
+                placeholder="Scrivi o seleziona l'email",
                 key="email"
             )
 
