@@ -236,6 +236,28 @@ def salva_dati():
         st.balloons()
         st.session_state["num_figli"] = 1
         st.session_state["conferma"] = False
+    
+    # ===== FUNZIONE RESET CAMPI PAGAMENTO =====
+def reset_campi_pagamento():
+    st.session_state["num_figli"] = 1
+
+    # Alunni
+    st.session_state["alunno_1"] = ""
+    for i in range(2, 8):
+        st.session_state[f"alunno_{i}_select"] = ""
+
+    # Genitore
+    st.session_state["genitore"] = ""
+    st.session_state["telefono"] = ""
+    st.session_state["email"] = ""
+
+    # Mesi
+    st.session_state["mese_singolo"] = ""
+    st.session_state["mese_da"] = ""
+    st.session_state["mese_a"] = ""
+
+    # Stato
+    st.session_state["conferma"] = False
 
 # --- FUNZIONE PER ACCEDERE ALLO SHEET ---
 def get_sheet():
@@ -675,6 +697,9 @@ if check_password():
 
                         # 🔄 invalida cache DOPO tutto
                         st.session_state.pop("db_cache", None)
+
+                        # ✅ RESET CAMPI (AGGIUNTA)
+                        reset_campi_pagamento()
 
                         st.success("✅ Dati salvati correttamente")
                         st.balloons()
