@@ -16,10 +16,10 @@ def registra_alunno():
 
     # --- Form per inserire dati ---
     with st.form("form_nuovo_alunno"):
-        nome_alunno = st.text_input("Nome Alunno")
-        nome_genitore = st.text_input("Nome Genitore")
-        telefono = st.text_input("Telefono")
-        email = st.text_input("Email")
+        nome_alunno = st.text_input("Nome Alunno", value=st.session_state.get("Nome Alunno", ""))
+        nome_genitore = st.text_input("Nome Genitore", value=st.session_state.get("Nome Genitore", ""))
+        telefono = st.text_input("Telefono", value=st.session_state.get("Telefono", ""))
+        email = st.text_input("Email", value=st.session_state.get("Email", ""))
         submit = st.form_submit_button("Salva")
 
     if submit:
@@ -58,8 +58,6 @@ def registra_alunno():
         st.markdown(f"**Nome Genitore:** {dati.get('Nome Genitore')}")
         st.markdown(f"**Telefono:** {dati.get('Telefono')}")
         st.markdown(f"**Email:** {dati.get('Email')}")
-
-        st.rerun()  # ricarica tutto da capo pulito
 
         col1, col2 = st.columns(2)
 
@@ -122,11 +120,16 @@ def registra_alunno():
 
                     st.success(f"✅ Nuovo alunno registrato con ID {nuovo_id}")
                     st.balloons()
-                    st.rerun()  # ricarica tutto da capo pulito
 
-                    # reset stato conferma
+                    # --- Reset stato conferma e campi ---
                     st.session_state["conferma_nuovo_alunno"] = False
                     st.session_state.pop("nuovo_alunno", None)
+                    st.session_state["Nome Alunno"] = ""
+                    st.session_state["Nome Genitore"] = ""
+                    st.session_state["Telefono"] = ""
+                    st.session_state["Email"] = ""
+
+                    st.rerun()
 
                 except Exception as e:
                     st.error(f"Errore salvataggio su Google Sheet: {e}")
