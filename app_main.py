@@ -438,90 +438,41 @@ if check_password():
                             st.rerun()
 
         # --- Autocompilazione dati genitore in base all'alunno principale ---
-        opzioni_alunni = lista_alunni + ["➕ Nuovo alunno"]
-
-        scelta_alunno = st.selectbox(
-            "Nome Alunno",
-            options=opzioni_alunni,
-            index=None,
-            placeholder="Seleziona un alunno"
-        )
-
-        if scelta_alunno == "➕ Nuovo alunno":
-            nome_alunno_1 = st.text_input("Inserisci nome nuovo alunno")
-        else:
-            nome_alunno_1 = scelta_alunno or ""
-
-        st.session_state["alunno_1"] = nome_alunno_1
-
-        if nome_alunno_1 and nome_alunno_1 in dati_alunni:
-            dati = dati_alunni[nome_alunno_1]
+        nome_principale = st.session_state.get("alunno_1") or ""
+        if nome_principale:
+            dati = dati_alunni.get(nome_principale, {})
             st.session_state["genitore"] = dati.get("Nome Genitore", "")
             st.session_state["telefono"] = dati.get("Telefono", "")
             st.session_state["email"] = dati.get("Email", "")
 
-        # --- DATI GENITORE (SELECT + NUOVO) ---
-        st.subheader("Dati Genitore")
-
-        # Opzioni con "Nuovo"
-        opzioni_genitori = lista_genitori + ["➕ Nuovo genitore"]
-        opzioni_telefono = lista_telefono + ["➕ Nuovo telefono"]
-        opzioni_email = lista_email + ["➕ Nuova email"]
-
+        # --- DATI GENITORE (UNA CASELLA PER CAMPO) ---
         col1, col2 = st.columns(2)
-
-        # ===== GENITORE =====
         with col1:
-            scelta_genitore = st.selectbox(
+            nome_genitore = st.selectbox(
                 "Nome Genitore",
-                options=opzioni_genitori,
+                options=lista_genitori,
                 index=None,
-                placeholder="Seleziona o aggiungi genitore",
-                key="scelta_genitore"
+                placeholder="Scrivi o seleziona il nome genitore",
+                key="genitore"
             )
-
-            if scelta_genitore == "➕ Nuovo genitore":
-                nome_genitore = st.text_input(
-                    "Inserisci nome genitore",
-                    key="nuovo_genitore"
-                )
-            else:
-                nome_genitore = scelta_genitore or ""
-
-        # ===== TELEFONO =====
         with col2:
-            scelta_telefono = st.selectbox(
+            telefono = st.selectbox(
                 "Telefono",
-                options=opzioni_telefono,
+                options=lista_telefono,
                 index=None,
-                placeholder="Seleziona o aggiungi telefono",
-                key="scelta_telefono"
+                placeholder="Scrivi o seleziona il telefono",
+                key="telefono"
             )
 
-            if scelta_telefono == "➕ Nuovo telefono":
-                telefono = st.text_input(
-                    "Inserisci telefono",
-                    key="nuovo_telefono"
-                )
-            else:
-                telefono = scelta_telefono or ""
-
-        # ===== EMAIL =====
-        scelta_email = st.selectbox(
-            "Email",
-            options=opzioni_email,
-            index=None,
-            placeholder="Seleziona o aggiungi email",
-            key="scelta_email"
-        )
-
-        if scelta_email == "➕ Nuova email":
-            email = st.text_input(
-                "Inserisci email",
-                key="nuova_email"
+        col3, col4 = st.columns(2)
+        with col3:
+            email = st.selectbox(
+                "Email",
+                options=lista_email,
+                index=None,
+                placeholder="Scrivi o seleziona l'email",
+                key="email"
             )
-        else:
-            email = scelta_email or ""
 
         st.write("---")
 
