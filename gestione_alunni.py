@@ -67,7 +67,7 @@ def registra_alunno():
         with col1:
             if st.button("Modifico!"):
                 st.session_state["conferma_nuovo_alunno"] = False
-                st.experimental_rerun()
+                st.rerun()
         with col2:
             if st.button("Confermo!"):
                 try:
@@ -116,7 +116,7 @@ def registra_alunno():
                     st.session_state["reset_form"] = True
                     st.session_state["conferma_nuovo_alunno"] = False
                     st.session_state.pop("nuovo_alunno", None)
-                    st.experimental_rerun()
+                    st.rerun()
 
                 except Exception as e:
                     st.error(f"Errore salvataggio su Google Sheet: {e}")
@@ -226,4 +226,5 @@ def elimina_alunno():
 
                 except Exception as e:
                     st.error(f"Errore eliminazione su Google Sheet: {e}")
+
 
