@@ -679,6 +679,19 @@ if check_password():
                         st.success("✅ Dati salvati correttamente")
                         st.balloons()
 
+                        # 🔄 RESET AUTOMATICO CAMPPI
+                        chiavi_da_resettare = ["alunno_1", "genitore", "telefono", "email"]
+                        for i in range(2, st.session_state.get("num_figli", 1) + 1):
+                            chiavi_da_resettare.append(f"alunno_{i}")
+                            chiavi_da_resettare.append(f"alunno_{i}_select")
+
+                        for key in chiavi_da_resettare:
+                            if key in st.session_state:
+                                st.session_state[key] = ""
+
+                        # reset numero figli a 1
+                        st.session_state["num_figli"] = 1
+
                         # 🔓 sblocca e rerun UNA SOLA VOLTA
                         st.session_state["in_salvataggio"] = False
                         st.rerun()
