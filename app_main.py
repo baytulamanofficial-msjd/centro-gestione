@@ -324,15 +324,19 @@ if check_password():
 
     elif st.session_state.get("pagina") == "registro":
 
-        # ✅ MOSTRA CONFERMA (1 rerun)
-        if st.session_state.pop("mostra_conferma", False):
+        fase = st.session_state.get("fase_post_salvataggio")
+
+        if fase == "conferma":
             st.balloons()
             st.success("Pagamento registrato correttamente")
             st.success("Mail inviata con successo")
 
-        # 🔄 RESET FORM DOPO SALVATAGGIO (modo corretto Streamlit)
-        if st.session_state.pop("reset_form", False):
+            # passa alla fase reset
+            st.session_state["fase_post_salvataggio"] = "reset"
+            st.stop()
 
+        elif fase == "reset":
+            # 🔄 RESET VERO (prima dei widget)
             keys_to_clear = ["alunno_1", "genitore", "telefono", "email"]
 
             for i in range(2, st.session_state.get("num_figli", 1) + 1):
@@ -340,9 +344,14 @@ if check_password():
                 keys_to_clear.append(f"alunno_{i}_select")
 
             for key in keys_to_clear:
-                st.session_state[key] = ""
+                if key in st.session_state:
+                    del st.session_state[key]   # 👈 QUESTO è il reset giusto
 
             st.session_state["num_figli"] = 1
+            st.session_state["in_salvataggio"] = False
+            del st.session_state["fase_post_salvataggio"]
+
+            st.rerun()
 
         # ⛔ BLOCCO ANTI-LETTURA DURANTE SALVATAGGIO
         if st.session_state.get("in_salvataggio"):
@@ -696,14 +705,10 @@ if check_password():
                         # 🔄 invalida cache DOPO tutto
                         st.session_state.pop("db_cache", None)
 
-                        st.success("✅ Dati salvati correttamente")
-                        st.balloons()
-
-                        # 🔔 dice all'app: "al prossimo giro resetta il form"
-                        st.session_state["reset_form"] = True
-
-                        # 🔓 sblocca e rerun UNA SOLA VOLTA
+                        # segnala che siamo nella fase post-salvataggio
+                        st.session_state["fase_post_salvataggio"] = "conferma"
                         st.session_state["in_salvataggio"] = False
+                        st.rerun()
 
     # --- VISUALIZZAZIONE ---
     if st.session_state.get("pagina") == "visualizza":
