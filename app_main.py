@@ -327,25 +327,23 @@ if check_password():
         fase = st.session_state.get("fase_post_salvataggio")
 
         if fase == "conferma":
+            # ✅ Mostro popup
             st.balloons()
             st.success("Pagamento registrato correttamente")
             st.success("Mail inviata con successo")
 
-            # passa alla fase reset
+            # 🔄 Prepara reset per il run successivo
             st.session_state["fase_post_salvataggio"] = "reset"
-            st.stop()
 
-        elif fase == "reset":
-            # 🔄 RESET VERO (prima dei widget)
+        if fase == "reset":
+            # 🔄 Reset dei campi
             keys_to_clear = ["alunno_1", "genitore", "telefono", "email"]
-
             for i in range(2, st.session_state.get("num_figli", 1) + 1):
                 keys_to_clear.append(f"alunno_{i}")
                 keys_to_clear.append(f"alunno_{i}_select")
-
             for key in keys_to_clear:
                 if key in st.session_state:
-                    del st.session_state[key]   # 👈 QUESTO è il reset giusto
+                    del st.session_state[key]
 
             st.session_state["num_figli"] = 1
             st.session_state["in_salvataggio"] = False
