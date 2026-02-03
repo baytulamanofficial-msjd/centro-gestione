@@ -324,6 +324,12 @@ if check_password():
 
     elif st.session_state.get("pagina") == "registro":
 
+        # ✅ MOSTRA CONFERMA (1 rerun)
+        if st.session_state.pop("mostra_conferma", False):
+            st.balloons()
+            st.success("Pagamento registrato correttamente")
+            st.success("Mail inviata con successo")
+
         # 🔄 RESET FORM DOPO SALVATAGGIO (modo corretto Streamlit)
         if st.session_state.pop("reset_form", False):
 
@@ -698,7 +704,6 @@ if check_password():
 
                         # 🔓 sblocca e rerun UNA SOLA VOLTA
                         st.session_state["in_salvataggio"] = False
-                        st.rerun()
 
     # --- VISUALIZZAZIONE ---
     if st.session_state.get("pagina") == "visualizza":
