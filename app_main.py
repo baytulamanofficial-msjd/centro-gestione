@@ -685,9 +685,9 @@ if check_password():
                             chiavi_da_resettare.append(f"alunno_{i}")
                             chiavi_da_resettare.append(f"alunno_{i}_select")
 
-                        for key in chiavi_da_resettare:
-                            if key in st.session_state:
-                                st.session_state[key] = ""
+                        reset_dict = {key: "" for key in chiavi_da_resettare if key in st.session_state}
+                        reset_dict["num_figli"] = 1  # reset numero figli
+                        st.session_state.update(reset_dict)
 
                         # reset numero figli a 1
                         st.session_state["num_figli"] = 1
