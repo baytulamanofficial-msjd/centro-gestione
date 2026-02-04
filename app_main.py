@@ -105,6 +105,13 @@ def check_password():
         return False
     return True
 
+def conta_pagamenti_unici(riga):
+    firme = set()
+    for cella in riga:
+        if isinstance(cella, str) and "|" in cella:
+            firme.add(cella.strip())
+    return len(firme)
+
 # ===== FUNZIONE SALVA DATI SU GOOGLE SHEET =====
 def salva_dati():
     payload = st.session_state["payload_salvataggio"]
@@ -162,16 +169,15 @@ def salva_dati():
                 except:
                     pass
 
-            # 🔁 Alternanza colori
-            if ultimo_colore is None:
+            # 🔢 Conta i pagamenti REALI (non i mesi)
+            riga_corrente = sheet.row_values(idx_riga_esistente)
+            num_pagamenti = conta_pagamenti_unici(riga_corrente)
+
+            # 🎨 Alternanza colore per pagamento
+            if num_pagamenti % 2 == 0:
                 colore = COLOR1
             else:
-                # conta quante celle già pagate
-                pagate = sum(
-                    1 for c in sheet.row_values(idx_riga_esistente)
-                    if isinstance(c, str) and "|" in c
-                )
-                colore = COLOR1 if pagate % 2 == 0 else COLOR2
+                colore = COLOR2
 
             # Scrittura in blocco
             aggiornamenti = []
