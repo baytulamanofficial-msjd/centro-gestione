@@ -699,9 +699,11 @@ if check_password():
                         # 🔄 invalida cache DOPO tutto
                         st.session_state.pop("db_cache", None)
 
-                        # segnala che siamo nella fase post-salvataggio
-                        st.session_state["fase_post_salvataggio"] = "conferma"
+                        # ✅ segnali per il run successivo
+                        st.session_state["mostra_popup"] = True
+                        st.session_state["reset_form"] = True
                         st.session_state["in_salvataggio"] = False
+
                         st.rerun()
 
     # --- VISUALIZZAZIONE ---
