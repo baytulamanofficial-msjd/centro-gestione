@@ -347,7 +347,6 @@ if check_password():
             st.session_state["num_figli"] = 1
             st.rerun()  # fa ripartire il run con form vuoto
 
-
         # ⛔ BLOCCO ANTI-LETTURA DURANTE SALVATAGGIO
         if st.session_state.get("in_salvataggio"):
             st.stop()
