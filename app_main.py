@@ -155,28 +155,18 @@ def salva_dati():
 
         colonne_mesi_idx = [headers.index(mese) + 1 for mese in mesi_da_scrivere]
 
-        idx_riga_esistente = mappa_righe.get(nome_norm)
+        # =========================
+        # 🔵 ALUNNO ESISTENTE
+        # =========================
+        if idx_riga_esistente and isinstance(idx_riga_esistente, int) and idx_riga_esistente > 0:
 
-        # 🔎 Controllo sicurezza
-        if not idx_riga_esistente:
-            st.error(f"Alunno non trovato nel database: {nome}")
-            continue
-        
-        if not isinstance(idx_riga_esistente, int) or idx_riga_esistente <= 0:
-            st.error(f"Indice riga non valido per {nome}: {idx_riga_esistente}")
-            continue
+            riga_corrente = sheet.row_values(idx_riga_esistente)
+            num_pagamenti = conta_pagamenti_unici(riga_corrente)
 
-        # ✅ Ora è sicuro chiamare Google
-        riga_corrente = sheet.row_values(idx_riga_esistente)
+            # 🎨 Alternanza colore
+            colore = COLOR1 if num_pagamenti % 2 == 0 else COLOR2
 
-
-        # 🎨 Alternanza colore per pagamento
-        if num_pagamenti % 2 == 0:
-            colore = COLOR1
-        else:
-            colore = COLOR2
-
-            # Scrittura in blocco
+            # Scrittura celle
             aggiornamenti = []
             for col_idx in colonne_mesi_idx:
                 cella = gspread.utils.rowcol_to_a1(idx_riga_esistente, col_idx)
@@ -188,7 +178,7 @@ def salva_dati():
             if aggiornamenti:
                 sheet.batch_update(aggiornamenti)
 
-            # Colori in blocco
+            # Formattazione colori
             formattazioni = []
             for col_idx in colonne_mesi_idx:
                 formattazioni.append({
@@ -201,12 +191,17 @@ def salva_dati():
                         }
                     }
                 })
+
             if formattazioni:
                 sheet.batch_format(formattazioni)
 
+        # =========================
+        # 🟢 ALUNNO NUOVO
+        # =========================
         else:
-            # Alunno nuovo
+
             id_alunno = len(sheet.col_values(1)) + registrati + 1
+
             riga_nuova = [""] * len(headers)
             riga_nuova[0] = id_alunno
             riga_nuova[1] = nome
@@ -215,12 +210,12 @@ def salva_dati():
             riga_nuova[4] = email
 
             for mese, col_idx in zip(mesi_da_scrivere, colonne_mesi_idx):
-                riga_nuova[col_idx] = f"{importo} | {data_pagamento} | {responsabile}"
+                riga_nuova[col_idx - 1] = f"{importo} | {data_pagamento} | {responsabile}"
 
             sheet.append_row(riga_nuova)
 
-            # Applico colori
             nuova_riga_idx = len(sheet.get_all_values())
+
             for col_idx in colonne_mesi_idx:
                 sheet.format(
                     gspread.utils.rowcol_to_a1(nuova_riga_idx, col_idx),
@@ -232,6 +227,7 @@ def salva_dati():
                         }
                     }
                 )
+
             registrati += 1
 
     if registrati > 0:
