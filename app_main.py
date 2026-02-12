@@ -170,11 +170,11 @@ def salva_dati():
         riga_corrente = sheet.row_values(idx_riga_esistente)
 
 
-            # 🎨 Alternanza colore per pagamento
-            if num_pagamenti % 2 == 0:
-                colore = COLOR1
-            else:
-                colore = COLOR2
+        # 🎨 Alternanza colore per pagamento
+        if num_pagamenti % 2 == 0:
+            colore = COLOR1
+        else:
+            colore = COLOR2
 
             # Scrittura in blocco
             aggiornamenti = []
