@@ -155,23 +155,20 @@ def salva_dati():
 
         colonne_mesi_idx = [headers.index(mese) + 1 for mese in mesi_da_scrivere]
 
-        if idx_riga_esistente:
-            # 🔍 Trovo il colore dell'ultimo blocco pagato
-            ultimo_colore = None
+        idx_riga_esistente = mappa_righe.get(nome_norm)
 
-            for col_idx in range(len(headers)):
-                cella_a1 = gspread.utils.rowcol_to_a1(idx_riga_esistente, col_idx + 1)
-                try:
-                    fmt = sheet.get_note(cella_a1)  # forza accesso
-                    cell = sheet.cell(idx_riga_esistente, col_idx + 1)
-                    if cell.value and "|" in cell.value:
-                        ultimo_colore = cell_a1  # segna che esiste almeno un pagamento
-                except:
-                    pass
+        # 🔎 Controllo sicurezza
+        if not idx_riga_esistente:
+            st.error(f"Alunno non trovato nel database: {nome}")
+            continue
+        
+        if not isinstance(idx_riga_esistente, int) or idx_riga_esistente <= 0:
+            st.error(f"Indice riga non valido per {nome}: {idx_riga_esistente}")
+            continue
 
-            # 🔢 Conta i pagamenti REALI (non i mesi)
-            riga_corrente = sheet.row_values(idx_riga_esistente)
-            num_pagamenti = conta_pagamenti_unici(riga_corrente)
+        # ✅ Ora è sicuro chiamare Google
+        riga_corrente = sheet.row_values(idx_riga_esistente)
+
 
             # 🎨 Alternanza colore per pagamento
             if num_pagamenti % 2 == 0:
