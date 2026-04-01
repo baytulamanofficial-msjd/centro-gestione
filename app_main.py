@@ -664,37 +664,7 @@ if check_password():
 
                         # ✅ SOLO scrittura su Google Sheet
                         salva_dati()
-
-                        # 📧 INVIO RICEVUTE VIA MAIL
-                        dati = st.session_state["payload_salvataggio"]
-                        nomi_alunni = dati["nomi_alunni"]
-                        nome_genitore = dati["nome_genitore"]
-                        email_destinatario = dati["email"]
-                        importo = dati["importo"]
-                        responsabile = dati["responsabile"]
-
-                        if dati["tipo_pagamento"] == "Un mese":
-                            mesi_pagati = dati["mese_singolo"]
-                        else:
-                            mesi_pagati = f"{dati['mese_da']} - {dati['mese_a']}"
-
-                        if not st.session_state.get("mail_inviata", False):
-                            for nome_alunno in nomi_alunni:
-                                try:
-                                    invia_ricevuta_email(
-                                        email_destinatario=email_destinatario,
-                                        nome_genitore=nome_genitore,
-                                        nome_alunno=nome_alunno,
-                                        importo=importo,
-                                        mesi_pagati=mesi_pagati,
-                                        responsabile=responsabile
-                                    )
-                                except Exception as e:
-                                    st.error(f"Errore invio mail per {nome_alunno}: {e}")
-
-                            st.session_state["mail_inviata"] = True
-                            st.success("📧 Ricevuta inviata via email")
-
+                        
                         # 🔄 invalida cache DOPO tutto
                         st.session_state.pop("db_cache", None)
 
