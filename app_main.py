@@ -230,6 +230,28 @@ def salva_dati():
 
             registrati += 1
 
+    # 📧 INVIO MAIL (UNA SOLA VOLTA, DOPO TUTTO)
+    try:
+        if tipo_pagamento == "Un mese":
+            mesi_pagati = mese_singolo
+        else:
+            mesi_pagati = f"{mese_da} - {mese_a}"
+
+        for nome_alunno in nomi_alunni:
+            invia_ricevuta_email(
+                email_destinatario=email,
+                nome_genitore=nome_genitore,
+                nome_alunno=nome_alunno,
+                importo=importo,
+                mesi_pagati=mesi_pagati,
+                responsabile=responsabile
+            )
+
+       st.success("📧 Ricevuta inviata via email")
+
+    except Exception as e:
+       st.error(f"Errore invio mail: {e}")
+
     if registrati > 0:
         st.success("Salvato con successo!")
         st.balloons()
