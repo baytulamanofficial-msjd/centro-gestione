@@ -247,7 +247,7 @@ def salva_dati():
                 responsabile=responsabile
             )
 
-       st.success("📧 Ricevuta inviata via email")
+    st.success("📧 Ricevuta inviata via email")
 
     except Exception as e:
        st.error(f"Errore invio mail: {e}")
